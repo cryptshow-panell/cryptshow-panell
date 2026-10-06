@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ca">
 <head>
@@ -20,6 +21,7 @@
     --accent-ok: #4a8c5c;
     --accent-descans: #6b5a3e;
     --accent-juv: #7a5e8a;
+    --accent-tac: #4a7a8c;
   }
   * { box-sizing: border-box; }
   html, body {
@@ -176,14 +178,17 @@
   .csx-taula-cataleg td:nth-child(3) { max-width: 65px; }
   .csx-taula-cataleg td:nth-child(4) { max-width: 70px; }
   .csx-taula-cataleg th.col-juv,
-  .csx-taula-cataleg td.col-juv {
-    max-width: 50px; text-align: center;
+  .csx-taula-cataleg td.col-juv,
+  .csx-taula-cataleg th.col-tac,
+  .csx-taula-cataleg td.col-tac {
+    max-width: 45px; text-align: center;
   }
   .csx-taula-cataleg input[type="checkbox"] {
-    accent-color: var(--accent-juv);
     cursor: pointer;
     width: 16px; height: 16px;
   }
+  .csx-taula-cataleg input[type="checkbox"].juv-cb { accent-color: var(--accent-juv); }
+  .csx-taula-cataleg input[type="checkbox"].tac-cb { accent-color: var(--accent-tac); }
   .csx-drag-handle {
     cursor: grab; color: var(--text-dim);
     width: 24px; text-align: center; letter-spacing: -1px;
@@ -435,6 +440,17 @@
   .csx-juv-check input { accent-color: var(--accent-juv); cursor: pointer; }
   .csx-juv-check.sel { color: var(--text); }
 
+  .csx-tac-check {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 13px; color: var(--text-dim);
+    background: rgba(74,122,140,0.12);
+    border: 1px solid var(--accent-tac);
+    padding: 6px 10px; border-radius: 2px;
+    cursor: pointer;
+  }
+  .csx-tac-check input { accent-color: var(--accent-tac); cursor: pointer; }
+  .csx-tac-check.sel { color: var(--text); }
+
   .csx-login-wrap {
     display: flex; justify-content: center; align-items: center;
     min-height: 100vh; width: 100%;
@@ -630,6 +646,8 @@
     { key: "twitter", label: "Twitter" },
     { key: "facebook", label: "Facebook" },
     { key: "trailer", label: "Trailer" },
+    { key: "esJuvenil", label: "És juvenil" },
+    { key: "esTac", label: "TAC" },
     { key: "dia", label: "Dia" },
     { key: "horaInici", label: "Hora inici" },
     { key: "horaFi", label: "Hora fi" },
@@ -729,11 +747,23 @@
     }
     return false;
   }
+  function textAEsSi(val) {
+    var s = (val || "").toString().trim().toLowerCase();
+    if (!s) return false;
+    if (s === "si" || s === "sí" || s === "yes" || s === "true" || s === "1" || s === "x") return true;
+    return false;
+  }
   function textAEsJuvenil(val) {
     var s = (val || "").toString().trim().toLowerCase();
     if (!s) return false;
-    if (s === "si" || s === "sí" || s === "yes" || s === "true" || s === "1" || s === "x" || s === "juvenil" || s === "juv") return true;
-    return false;
+    if (s === "juvenil" || s === "juv") return true;
+    return textAEsSi(s);
+  }
+  function textAEsTac(val) {
+    var s = (val || "").toString().trim().toLowerCase();
+    if (!s) return false;
+    if (s === "tac") return true;
+    return textAEsSi(s);
   }
 
   var SINONIMS_CAMP = {
@@ -749,7 +779,8 @@
     twitter: ["twitter", "x twitter"],
     facebook: ["facebook", "fb"],
     trailer: ["trailer", "trailer url", "enlace trailer", "link trailer"],
-    esJuvenil: ["juvenil", "es juvenil", "és juvenil", "infantil", "public juvenil", "publico juvenil"]
+    esJuvenil: ["es juvenil", "és juvenil", "juvenil", "public juvenil", "publico juvenil"],
+    esTac: ["tac"]
   };
 
   function autoMapejarColumnes(headers) {
@@ -971,6 +1002,7 @@
   }
   function normalitzarCurt(c) {
     c.esJuvenil = !!c.esJuvenil;
+    c.esTac = !!c.esTac;
     return c;
   }
 
@@ -1475,7 +1507,7 @@
 
   var novaEdicioForm = { any: String(ANY_ACTUAL), nom: "" };
   var novaSessioForm = { nom: "", dia: "", horaInici: "", tipus: TIPUS_SESSIO[0], lloc: "cercle", tarifaId: "" };
-  var novCurtForm = { titol: "", durMin: "", durSec: "", esJuvenil: false };
+  var novCurtForm = { titol: "", durMin: "", durSec: "" };
   var novaActivitatForm = { titol: "", dia: "", horaInici: "", durHores: "", durMinuts: "", descripcio: "", contacte: "", lloc: "cercle", tarifaId: "", camps: [] };
   var novaJuvenilForm = { nom: "", dia: "", horaInici: "", lloc: "cercle", tarifaId: "", descripcio: "" };
   var novCurtFormCat = {
@@ -1483,7 +1515,8 @@
     titol: "", titolOriginal: "", durada: "", pais: "",
     director: "", email: "", idioma: "", subtitols: "",
     sinopsi: "", twitter: "", facebook: "", trailer: "",
-    esJuvenil: false
+    esJuvenil: false,
+    esTac: false
   };
   var tasquesForm = { text: "", data: "" };
 
@@ -1657,7 +1690,8 @@
   }
 
   function juvenilFormHtml(edicioId) {
-    var f = state.juvenilForm || {};
+    if (!state.juvenilForm) state.juvenilForm = { nom: "", dia: "", horaInici: "", lloc: "cercle", tarifaId: "", descripcio: "" };
+    var f = state.juvenilForm;
     var formLloc = esFestival(state.cicleActiu)
       ? '<select id="j-lloc">' + opcionsLlocActivitatHtml(f.lloc || "cercle") + '</select>' : "";
     var selectTarifes = opcionsTarifesHtmlJuv(edicioId, f.tarifaId || "");
@@ -1757,6 +1791,11 @@
       return '<div class="csx-panel-head"><div><div class="csx-eyebrow">Fitxes de creació</div>' +
         '<h2>Selecciona una edició</h2></div><div>' + selectEdicio + '</div></div>' +
         '<p class="csx-empty">Encara no hi ha cap edició creada en aquest cicle. Ves a <button class="csx-link-btn" data-nav="edicions">Edicions</button> per crear-ne una.</p>';
+    }
+
+    // IMPORTANT: inicialitzar juvenilForm abans de renderitzar
+    if (!state.juvenilForm) {
+      state.juvenilForm = { nom: "", dia: "", horaInici: "", lloc: "cercle", tarifaId: "", descripcio: "" };
     }
 
     var sessionsEd = sessionsPerCicle(state.cicleActiu, edicio.id);
@@ -1940,7 +1979,7 @@
   }
 
   function activitatRowHtml(a, tots, arrossegable, edId) {
-    var avis = teAvisSolapament(a, tots) ? '<span class="csx-avis" title="Solapa">⚠</span>' : "";
+    var avis = teAvisSolapament(a, totes) ? '<span class="csx-avis" title="Solapa">⚠</span>' : "";
     var nansa = arrossegable ? '<span class="csx-drag-handle">⠿</span>' : "";
     var draggableAttr = arrossegable ? ' draggable="true" data-drag-item="' + a.id + '" data-tipus-item="activitat"' : "";
     var preu = (edId && a.tarifaId) ? textPreuSessio(a, edId) : "";
@@ -2212,9 +2251,8 @@
     var csvMapatge = (state.csvImport && state.csvImport.seccioDesti === seccio) ? csvMapatgeHtml() : "";
     var llistatObert = seccio === "oficial" ? state.curtsLlistatOficial : state.curtsLlistatFora;
 
-    var juvActiu = (seccio === "oficial") ? novCurtFormCat.esJuvenil : novCurtFormCat.esJuvenil;
-    var juvCheck = '<label class="csx-juv-check' + (juvActiu ? ' sel' : '') + '">' +
-      '<input type="checkbox" id="cat-esJuvenil"' + (juvActiu ? ' checked' : '') + '> És juvenil</label>';
+    var juvActiu = !!novCurtFormCat.esJuvenil;
+    var tacActiu = !!novCurtFormCat.esTac;
 
     var formAfegir = '<div class="csx-day-subhead" style="font-size:14px;color:var(--text);margin-top:20px;">Afegir ' + (seccio === "oficial" ? "curt" : "llarg") + ' manualment</div>' +
       '<div class="csx-form-row">' +
@@ -2222,7 +2260,10 @@
       '<input id="cat-titolOriginal" class="csx-grow" placeholder="Títol original" value="' + escapeHtml(novCurtFormCat.titolOriginal) + '">' +
       '<input id="cat-durada" placeholder="Durada (hh:mm:ss)" style="width:130px" value="' + escapeHtml(novCurtFormCat.durada) + '">' +
       '<input id="cat-pais" placeholder="País" style="width:110px" value="' + escapeHtml(novCurtFormCat.pais) + '">' +
-      juvCheck +
+      '<label class="csx-juv-check' + (juvActiu ? ' sel' : '') + '">' +
+      '<input type="checkbox" id="cat-esJuvenil"' + (juvActiu ? ' checked' : '') + '> És juvenil</label>' +
+      '<label class="csx-tac-check' + (tacActiu ? ' sel' : '') + '">' +
+      '<input type="checkbox" id="cat-esTac"' + (tacActiu ? ' checked' : '') + '> TAC</label>' +
       '</div>' +
       '<div class="csx-form-row">' +
       '<input id="cat-director" placeholder="Director/a" value="' + escapeHtml(novCurtFormCat.director) + '">' +
@@ -2249,6 +2290,7 @@
     var cosLlistat = llistatObert ? taulaCatalegHtml(curts, seccio) : '';
 
     var nJuv = curts.filter(function (c) { return !!c.esJuvenil; }).length;
+    var nTac = curts.filter(function (c) { return !!c.esTac; }).length;
 
     return '<section class="csx-panel">' +
       '<div class="csx-panel-head"><div>' +
@@ -2257,11 +2299,13 @@
       '<div>' + selectEdicio + '</div></div>' +
       subnav +
       '<div class="csx-form-row"><input type="file" id="' + csvInputId + '" accept=".csv,text/csv">' +
-      '<span style="font-size:11px;color:var(--text-dim);">CSV amb durada en format hh:mm:ss. Columna "És juvenil" opcional.</span></div>' +
+      '<span style="font-size:11px;color:var(--text-dim);">CSV amb durada en format hh:mm:ss. Columnes "És juvenil" i "TAC" opcionals.</span></div>' +
       csvMapatge +
       '<p style="font-size:12px;color:var(--text-dim);margin:8px 0 12px;">' +
       '<strong style="color:var(--accent-amber);">' + curts.length + '</strong> ' + (seccio === "oficial" ? "curt(s)" : "llarg(s)") + ' al catàleg' +
-      (nJuv > 0 ? ' · <strong style="color:var(--accent-juv);">' + nJuv + '</strong> juvenil(s)' : '') + '</p>' +
+      (nJuv > 0 ? ' · <strong style="color:var(--accent-juv);">' + nJuv + '</strong> juvenil(s)' : '') +
+      (nTac > 0 ? ' · <strong style="color:var(--accent-tac);">' + nTac + '</strong> TAC' : '') +
+      '</p>' +
       toggleLlistat +
       cosLlistat +
       formAfegir +
@@ -2272,6 +2316,7 @@
     if (llista.length === 0) return '<p class="csx-empty">Encara no hi ha cap fitxa en aquesta secció.</p>';
     var files = llista.map(function (c) {
       var juvChecked = c.esJuvenil ? " checked" : "";
+      var tacChecked = c.esTac ? " checked" : "";
       return '<tr>' +
         '<td title="' + escapeHtml(c.titol || "") + '">' + escapeHtml(c.titol) + '</td>' +
         '<td title="' + escapeHtml(c.titolOriginal || "") + '">' + escapeHtml(c.titolOriginal || "") + '</td>' +
@@ -2284,13 +2329,15 @@
         '<td>' + escapeHtml(c.twitter || "") + '</td>' +
         '<td>' + escapeHtml(c.facebook || "") + '</td>' +
         '<td>' + (c.trailer ? '<a href="' + escapeHtml(c.trailer) + '" target="_blank" rel="noopener">obrir</a>' : "") + '</td>' +
-        '<td class="col-juv"><input type="checkbox" data-juv-curt="' + c.id + '"' + juvChecked + ' title="És juvenil"></td>' +
+        '<td class="col-juv"><input type="checkbox" class="juv-cb" data-juv-curt="' + c.id + '"' + juvChecked + ' title="És juvenil"></td>' +
+        '<td class="col-tac"><input type="checkbox" class="tac-cb" data-tac-curt="' + c.id + '"' + tacChecked + ' title="TAC"></td>' +
         '<td><button class="csx-link-btn" data-del-curt-catalog="' + c.id + '">eliminar</button></td>' +
         '</tr>';
     }).join("");
     return '<div style="overflow-x:auto;"><table class="csx-table csx-taula-cataleg"><thead><tr>' +
       '<th>Títol</th><th>Títol orig.</th><th>Durada</th><th>País</th><th>Director/a</th><th>Email</th>' +
-      '<th>Idioma</th><th>Subtítols</th><th>Twitter</th><th>Facebook</th><th>Trailer</th><th class="col-juv">Juv.</th><th></th>' +
+      '<th>Idioma</th><th>Subtítols</th><th>Twitter</th><th>Facebook</th><th>Trailer</th>' +
+      '<th class="col-juv">Juv.</th><th class="col-tac">TAC</th><th></th>' +
       '</tr></thead><tbody>' + files + '</tbody></table></div>';
   }
 
@@ -2321,7 +2368,8 @@
       { key: "twitter", label: "Twitter" },
       { key: "facebook", label: "Facebook" },
       { key: "trailer", label: "Trailer" },
-      { key: "esJuvenil", label: "És juvenil" }
+      { key: "esJuvenil", label: "És juvenil" },
+      { key: "esTac", label: "TAC" }
     ];
     var files = camps.map(function (c) {
       var act = state.csvImport.mapping[c.key];
@@ -2474,6 +2522,8 @@
         '<td>' + escapeHtml(c.twitter || "") + '</td>' +
         '<td>' + escapeHtml(c.facebook || "") + '</td>' +
         '<td>' + (c.trailer ? '<a href="' + escapeHtml(c.trailer) + '" target="_blank" rel="noopener">obrir</a>' : "") + '</td>' +
+        '<td>' + (c.esJuvenil ? '<span style="color:var(--accent-juv);">Sí</span>' : "") + '</td>' +
+        '<td>' + (c.esTac ? '<span style="color:var(--accent-tac);">Sí</span>' : "") + '</td>' +
         '<td>' + (p ? escapeHtml(dataLlarga(p.dia)) : "") + '</td>' +
         '<td>' + (p ? escapeHtml(p.horaInici) : "") + '</td>' +
         '<td>' + (p ? escapeHtml(p.horaFi) : "") + '</td>' +
@@ -2496,6 +2546,7 @@
           '<th>Núm.</th><th>Sec.</th><th>Títol</th><th>Títol orig.</th><th>Durada</th><th>País</th>' +
           '<th>Director/a</th><th>Email</th><th>Idioma</th><th>Subtítols</th>' +
           '<th>Twitter</th><th>Facebook</th><th>Trailer</th>' +
+          '<th>Juv.</th><th>TAC</th>' +
           '<th>Dia</th><th>Hora inici</th><th>Hora fi</th><th>Sala</th><th>Sessió</th>' +
           '</tr></thead><tbody>' + files + '</tbody></table></div>';
     }
@@ -2907,7 +2958,7 @@
           if (esFestival(state.cicleActiu) && (oberta.lloc || "cercle") === "cercle" && hiHaConflicteCercle(oberta, tots, oberta.id)) {
             oberta.curts.pop(); window.alert("Solaparia. No afegit."); render(); return;
           }
-          desarSessions(state.cicleActiu, edicio.id); novCurtForm = { titol: "", durMin: "", durSec: "", esJuvenil: false }; render();
+          desarSessions(state.cicleActiu, edicio.id); render();
         }
 
         var selCat = document.getElementById("c-select-catalog");
@@ -3066,27 +3117,6 @@
           btn.addEventListener("click", function () {
             var id = btn.getAttribute("data-del-curt");
             juvOberta.curts = juvOberta.curts.filter(function (c) { return c.id !== id; });
-            desarSessions(state.cicleActiu, edicio.id); render();
-          });
-        });
-
-        var draggedCurtIdJ = null;
-        main.querySelectorAll("[data-curt-id]").forEach(function (row) {
-          row.addEventListener("dragstart", function (e) {
-            draggedCurtIdJ = row.getAttribute("data-curt-id");
-            row.classList.add("csx-dragging");
-            if (e.dataTransfer) { e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", draggedCurtIdJ); }
-          });
-          row.addEventListener("dragend", function () { row.classList.remove("csx-dragging"); });
-          row.addEventListener("dragover", function (e) { e.preventDefault(); });
-          row.addEventListener("drop", function (e) {
-            e.preventDefault();
-            var tid = row.getAttribute("data-curt-id");
-            if (!draggedCurtIdJ || draggedCurtIdJ === tid) return;
-            var cs = juvOberta.curts; var fi = -1, ti = -1;
-            for (var i = 0; i < cs.length; i++) { if (cs[i].id === draggedCurtIdJ) fi = i; if (cs[i].id === tid) ti = i; }
-            if (fi < 0 || ti < 0) return;
-            var m = cs.splice(fi, 1)[0]; cs.splice(ti, 0, m);
             desarSessions(state.cicleActiu, edicio.id); render();
           });
         });
@@ -3257,16 +3287,17 @@
         if (jDesc2) jDesc2.addEventListener("input", function () { state.juvenilForm.descripcio = jDesc2.value; });
         var elJCrear = document.getElementById("j-crear");
         if (elJCrear) elJCrear.addEventListener("click", function () {
-          if (!state.juvenilForm.dia || !state.juvenilForm.horaInici) { window.alert("Cal dia i hora."); return; }
+          var f = state.juvenilForm || {};
+          if (!f.dia || !f.horaInici) { window.alert("Cal dia i hora."); return; }
           var ns = {
-            id: uid(), nom: state.juvenilForm.nom || "Sessió Juvenil",
-            dia: state.juvenilForm.dia, horaInici: state.juvenilForm.horaInici,
+            id: uid(), nom: f.nom || "Sessió Juvenil",
+            dia: f.dia, horaInici: f.horaInici,
             tipus: "Sessió Juvenil",
-            curts: [], tarifaId: state.juvenilForm.tarifaId || "",
-            descripcio: state.juvenilForm.descripcio || ""
+            curts: [], tarifaId: f.tarifaId || "",
+            descripcio: f.descripcio || ""
           };
           if (esFestival(state.cicleActiu)) {
-            ns.lloc = state.juvenilForm.lloc || "cercle";
+            ns.lloc = f.lloc || "cercle";
             if (ns.lloc === "cercle" && hiHaConflicteCercle(ns, sessionsEd.concat(activitatsEd), null)) { window.alert("Solapa amb una altra d'El Circol."); return; }
           }
           if (!state.sessions[state.cicleActiu][edicio.id]) state.sessions[state.cicleActiu][edicio.id] = [];
@@ -3276,7 +3307,7 @@
           render();
         });
         var elJCancel = document.getElementById("j-cancelar");
-        if (elJCancel) elJCancel.addEventListener("click", function () { state.juvenilForm = null; render(); });
+        if (elJCancel) elJCancel.addEventListener("click", function () { state.juvenilForm = { nom: "", dia: "", horaInici: "", lloc: "cercle", tarifaId: "", descripcio: "" }; render(); });
       } else {
         main.querySelectorAll("[data-obrir-sessio]").forEach(function (row) {
           row.addEventListener("click", function () {
@@ -3497,7 +3528,8 @@
             sinopsi: val(row, "sinopsi"), idioma: val(row, "idioma"),
             subtitols: val(row, "subtitols"), twitter: val(row, "twitter"),
             facebook: val(row, "facebook"), trailer: val(row, "trailer"),
-            esJuvenil: textAEsJuvenil(val(row, "esJuvenil"))
+            esJuvenil: textAEsJuvenil(val(row, "esJuvenil")),
+            esTac: textAEsTac(val(row, "esTac"))
           };
         }).filter(function (c) { return c.titol.trim(); });
         if (!state.curts[edId]) state.curts[edId] = [];
@@ -3511,11 +3543,17 @@
         var el = document.getElementById("cat-" + camp);
         if (el) el.addEventListener("input", function () { novCurtFormCat[camp] = el.value; });
       });
-      var chkCat = document.getElementById("cat-esJuvenil");
-      if (chkCat) chkCat.addEventListener("change", function () {
-        novCurtFormCat.esJuvenil = chkCat.checked;
-        var lbl = chkCat.parentElement;
-        if (lbl) lbl.className = "csx-juv-check" + (chkCat.checked ? " sel" : "");
+      var chkCatJuv = document.getElementById("cat-esJuvenil");
+      if (chkCatJuv) chkCatJuv.addEventListener("change", function () {
+        novCurtFormCat.esJuvenil = chkCatJuv.checked;
+        var lbl = chkCatJuv.parentElement;
+        if (lbl) lbl.className = "csx-juv-check" + (chkCatJuv.checked ? " sel" : "");
+      });
+      var chkCatTac = document.getElementById("cat-esTac");
+      if (chkCatTac) chkCatTac.addEventListener("change", function () {
+        novCurtFormCat.esTac = chkCatTac.checked;
+        var lbl = chkCatTac.parentElement;
+        if (lbl) lbl.className = "csx-tac-check" + (chkCatTac.checked ? " sel" : "");
       });
       var bA = document.getElementById("cat-afegir");
       if (bA) bA.addEventListener("click", function () {
@@ -3529,13 +3567,14 @@
           idioma: novCurtFormCat.idioma.trim(), subtitols: novCurtFormCat.subtitols.trim(),
           sinopsi: novCurtFormCat.sinopsi.trim(), twitter: novCurtFormCat.twitter.trim(),
           facebook: novCurtFormCat.facebook.trim(), trailer: novCurtFormCat.trailer.trim(),
-          esJuvenil: !!novCurtFormCat.esJuvenil
+          esJuvenil: !!novCurtFormCat.esJuvenil,
+          esTac: !!novCurtFormCat.esTac
         };
         var edId = state.premsaEdicio;
         if (!state.curts[edId]) state.curts[edId] = [];
         state.curts[edId].push(nou);
         desarCurts(edId);
-        novCurtFormCat = { seccio: seccio, titol: "", titolOriginal: "", durada: "", pais: "", director: "", email: "", idioma: "", subtitols: "", sinopsi: "", twitter: "", facebook: "", trailer: "", esJuvenil: false };
+        novCurtFormCat = { seccio: seccio, titol: "", titolOriginal: "", durada: "", pais: "", director: "", email: "", idioma: "", subtitols: "", sinopsi: "", twitter: "", facebook: "", trailer: "", esJuvenil: false, esTac: false };
         render();
       });
       main.querySelectorAll("[data-juv-curt]").forEach(function (cb) {
@@ -3544,6 +3583,14 @@
           var edId = state.premsaEdicio;
           var c = (state.curts[edId] || []).filter(function (x) { return x.id === id; })[0];
           if (c) { c.esJuvenil = cb.checked; desarCurts(edId); }
+        });
+      });
+      main.querySelectorAll("[data-tac-curt]").forEach(function (cb) {
+        cb.addEventListener("change", function () {
+          var id = cb.getAttribute("data-tac-curt");
+          var edId = state.premsaEdicio;
+          var c = (state.curts[edId] || []).filter(function (x) { return x.id === id; })[0];
+          if (c) { c.esTac = cb.checked; desarCurts(edId); }
         });
       });
       main.querySelectorAll("[data-del-curt-catalog]").forEach(function (btn) {
@@ -3802,6 +3849,8 @@
         else if (cp.key === "horaFi") v = p ? p.horaFi : "";
         else if (cp.key === "sala") v = p ? llocLabel(p.lloc) : "";
         else if (cp.key === "sessio") v = p ? p.nomSessio : "";
+        else if (cp.key === "esJuvenil") v = c.esJuvenil ? "Sí" : "";
+        else if (cp.key === "esTac") v = c.esTac ? "Sí" : "";
         else v = c[cp.key] || "";
         fila.push(v);
       });
