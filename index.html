@@ -22,6 +22,7 @@
     --accent-juv: #7a5e8a;
     --accent-tac: #4a7a8c;
     --accent-fix: #b89b5e;
+    --accent-warn: #c96a3c;
   }
   * { box-sizing: border-box; }
   html, body {
@@ -236,6 +237,7 @@
   }
   .csx-cicle-rename:hover { color: var(--accent-amber); }
   .csx-avis { color: var(--accent-amber); font-size: 13px; margin-left: 4px; }
+  .csx-avis-warn { color: var(--accent-warn); font-size: 13px; margin-left: 4px; }
   .csx-day-group { margin-bottom: 24px; }
   .csx-day-header {
     font-size: 15px; color: var(--accent-amber);
@@ -244,6 +246,7 @@
     padding-bottom: 6px; border-bottom: 1px solid var(--border);
   }
   .csx-day-header:first-child { margin-top: 0; }
+  .csx-day-header.warn { color: var(--accent-warn); }
   .csx-day-subhead {
     font-size: 11px; color: var(--text-dim); margin: 8px 0 4px;
   }
@@ -263,12 +266,18 @@
     background: rgba(122,94,138,0.12);
     border-left: 3px solid var(--accent-juv);
   }
+  .csx-session-row.csx-warn {
+    border-left: 3px solid var(--accent-warn);
+    background: rgba(201,106,60,0.08);
+  }
   .csx-session-row-main { display: flex; gap: 16px; align-items: baseline; flex-wrap: wrap; flex: 1; min-width: 0; }
   .csx-session-num {
     font-family: 'Fraunces', serif; font-weight: 600;
     color: var(--accent-amber);
   }
   .csx-session-time { color: var(--text-dim); font-size: 13px; }
+  .csx-session-time.warn { color: var(--accent-warn); font-style: italic; }
+  .csx-session-desc { color: var(--text-dim); font-size: 13px; font-style: italic; }
   .csx-session-sala {
     font-size: 11px;
     color: var(--accent-moss);
@@ -1645,28 +1654,33 @@
   function horaFiSessio(s) { return minutsAHora(horaFiMinuts(s)); }
   function seSolapen(a, b) {
     if (!a.dia || a.dia !== b.dia) return false;
+    if (!a.horaInici || !b.horaInici) return false;
     var ai = horaAMinuts(a.horaInici), af = horaFiMinuts(a);
     var bi = horaAMinuts(b.horaInici), bf = horaFiMinuts(b);
     return ai < bf && bi < af;
   }
   function hiHaConflicteCercle(prova, totes, ignorarId) {
+    if (!prova.dia || !prova.horaInici) return false;
     for (var i = 0; i < totes.length; i++) {
       var o = totes[i];
       if (o.id === ignorarId) continue;
       if (esDescans(o)) continue;
       if (esDescans(prova)) continue;
       if (o.lloc !== "cercle") continue;
+      if (!o.dia || !o.horaInici) continue;
       if (seSolapen(prova, o)) return true;
     }
     return false;
   }
   function teAvisSolapament(s, totes) {
     if (esDescans(s)) return false;
+    if (!s.dia || !s.horaInici) return false;
     for (var i = 0; i < totes.length; i++) {
       var o = totes[i];
       if (o.id === s.id) continue;
       if (esDescans(o)) continue;
       if (o.lloc === s.lloc) continue;
+      if (!o.dia || !o.horaInici) continue;
       if (seSolapen(s, o)) return true;
     }
     return false;
@@ -1680,14 +1694,18 @@
     ordreNou.forEach(function (id) {
       if (mapItems[id]) ordenats.push(mapItems[id]);
     });
-    var hiHaFlexible = ordenats.some(function (it) { return !it.horaFixada; });
+    // Filtrem només els que tenen hora
+    var ambHora = ordenats.filter(function (it) { return it.horaInici; });
+    if (ambHora.length === 0) return { ok: true, resultat: {} };
+
+    var hiHaFlexible = ambHora.some(function (it) { return !it.horaFixada; });
     if (!hiHaFlexible) {
       var resultat = {};
-      ordenats.forEach(function (it) { resultat[it.id] = it.horaInici; });
+      ambHora.forEach(function (it) { resultat[it.id] = it.horaInici; });
       return { ok: true, resultat: resultat };
     }
     var horaBase = null;
-    ordenats.forEach(function (it) {
+    ambHora.forEach(function (it) {
       if (!it.horaFixada) {
         var h = horaAMinuts(it.horaInici || "00:00");
         if (horaBase === null || h < horaBase) horaBase = h;
@@ -1695,8 +1713,8 @@
     });
     var cursor = horaBase;
     var resultat = {};
-    for (var i = 0; i < ordenats.length; i++) {
-      var it = ordenats[i];
+    for (var i = 0; i < ambHora.length; i++) {
+      var it = ambHora[i];
       if (it.horaFixada) {
         var hFix = horaAMinuts(it.horaInici || "00:00");
         if (cursor > hFix) {
@@ -2153,7 +2171,7 @@
   }
 
   var novaEdicioForm = { any: String(ANY_ACTUAL), nom: "" };
-  var novaSessioForm = { nom: "", dia: "", horaInici: "", tipus: TIPUS_SESSIO[0], lloc: "cercle", tarifaId: "", horaFixada: false };
+  var novaSessioForm = { nom: "", dia: "", horaInici: "", tipus: TIPUS_SESSIO[0], lloc: "cercle", tarifaId: "", horaFixada: false, descripcio: "" };
   var novCurtForm = { titol: "", durMin: "", durSec: "" };
   var novaActivitatForm = { titol: "", dia: "", horaInici: "", durHores: "", durMinuts: "", descripcio: "", contacte: "", lloc: "cercle", tarifaId: "", camps: [], horaFixada: false };
   var novCurtFormCat = {
@@ -2392,12 +2410,19 @@
       if (!perDia[dia]) perDia[dia] = [];
       perDia[dia].push(it);
     });
-    var dies = Object.keys(perDia).sort();
+    var dies = Object.keys(perDia).sort(function (a, b) {
+      // Els buits primer
+      if (a === "" && b !== "") return -1;
+      if (b === "" && a !== "") return 1;
+      return a.localeCompare(b);
+    });
 
     var html = dies.map(function (dia) {
       var items = perDia[dia].slice().sort(function (a, b) {
-        return (a.horaInici || "").localeCompare(b.horaInici || "");
+        return (a.horaInici || "99:99").localeCompare(b.horaInici || "99:99");
       });
+      var diaCls = dia === "" ? " warn" : "";
+      var diaTxt = dia === "" ? "⚠ Sense dia assignat" : (dataLlarga(dia) || "Sense dia");
       var contingut;
       if (state.programacioAgrupacio === "sala") {
         contingut = renderBlocsSalaHtml(items, tots, edicio, dia);
@@ -2407,7 +2432,7 @@
           '</div>';
       }
       return '<div class="csx-day-group" data-dia="' + escapeHtml(dia) + '">' +
-        '<div class="csx-day-header">' + escapeHtml(dataLlarga(dia) || "Sense dia") + '</div>' +
+        '<div class="csx-day-header' + diaCls + '">' + escapeHtml(diaTxt) + '</div>' +
         contingut +
         '</div>';
     }).join("");
@@ -2417,7 +2442,6 @@
   }
 
   function renderBlocsSalaHtml(items, tots, edicio, dia) {
-    // Blocs de sala consecutius
     var blocs = [];
     var blocActual = null;
     items.forEach(function (it) {
@@ -2456,6 +2480,17 @@
     var cls = "";
     if (esDes) cls = " csx-descans";
     else if (esJuv) cls = " csx-juv";
+    // Avís si falta dia o hora
+    var faltaDia = !it.dia;
+    var faltaHora = !it.horaInici;
+    if (faltaDia || faltaHora) cls += " csx-warn";
+
+    var textHora;
+    if (faltaHora) {
+      textHora = '<span class="csx-session-time warn">⚠ Falta hora</span>';
+    } else {
+      textHora = '<span class="csx-session-time">' + escapeHtml(it.horaInici) + '–' + horaFiSessio(it) + fixIco + '</span>';
+    }
 
     var durTxt = "";
     if (esDes) {
@@ -2469,8 +2504,9 @@
     return '<div class="csx-session-row' + cls + '" ' + dataObrir + draggableAttr + ' data-item-id="' + it.id + '">' +
       '<div class="csx-session-row-main">' +
       '<span class="csx-drag-handle">⠿</span>' +
-      '<span class="csx-session-time">' + escapeHtml(it.horaInici || "—") + '–' + horaFiSessio(it) + fixIco + '</span>' +
+      textHora +
       '<span class="csx-session-num">' + escapeHtml(titol) + '</span>' +
+      (it.descripcio ? '<span class="csx-session-desc">' + escapeHtml(it.descripcio) + '</span>' : '') +
       (mostrarSala ? '<span class="csx-session-sala">' + escapeHtml(sala) + '</span>' : '') +
       '<span class="csx-session-tipus' + (esJuv ? ' juv' : '') + '">' + escapeHtml(etiquetaTipus) + '</span>' +
       (durTxt ? '<span class="csx-session-tipus" style="color:var(--accent-descans);border-color:var(--accent-descans);">' + durTxt + '</span>' : "") +
@@ -2554,17 +2590,22 @@
         var esAct = esActivitat(it);
         var esJuv = esSessioJuvenil(it);
         var titol = esAct ? (it.titol || "(sense títol)") : (it.nom || "(sense nom)");
-        var hora = escapeHtml(it.horaInici || "—") + '–' + horaFiSessio(it);
-        var diaTxt = it.dia ? dataLlarga(it.dia) : "—";
+        var hora;
+        if (!it.horaInici) hora = '<span class="csx-session-time warn">⚠ Falta hora</span>';
+        else hora = escapeHtml(it.horaInici) + '–' + horaFiSessio(it);
+        var diaTxt = it.dia ? dataLlarga(it.dia) : '<span class="csx-session-time warn">⚠ Falta dia</span>';
         var preu = textPreuSessio(it, edicio.id);
         var etiqueta = esJuv ? "Sessió Juvenil" : (esAct ? "Activitat" : "Sessió");
         var dades = esJuv ? 'data-obrir-juvenil="' + it.id + '"' : (esAct ? 'data-obrir-activitat="' + it.id + '"' : 'data-obrir-sessio="' + it.id + '"');
         var fixIco = it.horaFixada ? ' <span class="csx-fix-ico" title="Hora fixada">🔒</span>' : '';
-        return '<div class="csx-session-row' + (esJuv ? ' csx-juv' : '') + '" ' + dades + '>' +
+        var cls = esJuv ? ' csx-juv' : '';
+        if (!it.dia || !it.horaInici) cls += ' csx-warn';
+        return '<div class="csx-session-row' + cls + '" ' + dades + '>' +
           '<div class="csx-session-row-main">' +
-          '<span class="csx-session-time">' + escapeHtml(diaTxt) + '</span>' +
+          '<span class="csx-session-time">' + diaTxt + '</span>' +
           '<span class="csx-session-time">' + hora + fixIco + '</span>' +
           '<span class="csx-session-num">' + escapeHtml(titol) + '</span>' +
+          (it.descripcio ? '<span class="csx-session-desc">' + escapeHtml(it.descripcio) + '</span>' : '') +
           '<span class="csx-session-tipus' + (esJuv ? ' juv' : '') + '">' + etiqueta + '</span>' +
           (preu ? '<span class="csx-session-tipus" style="color:var(--accent-amber);border-color:var(--accent-amber);">' + escapeHtml(preu) + '</span>' : "") +
           '</div>' +
@@ -2595,6 +2636,9 @@
       selectTarifes +
       '<label class="csx-fix-check' + sFixCls + '">' +
       '<input type="checkbox" id="s-fixada"' + sFixSel + '> Hora fixa</label>' +
+      '</div>' +
+      '<div class="csx-form-row">' +
+      '<input id="s-descripcio" class="csx-grow" placeholder="Descripció (opcional)" value="' + escapeHtml(novaSessioForm.descripcio || "") + '">' +
       '<button class="csx-btn" id="s-crear">Crear sessió</button>' +
       '</div>' +
 
@@ -2711,7 +2755,11 @@
     var selectTarifaEdicio = opcionsTarifesHtmlActivitat(edicio.id, a.tarifaId || "").replace('id="a-tarifa"', 'id="a-edit-tarifa"');
     var fixSel = a.horaFixada ? " checked" : "";
     var fixCls = a.horaFixada ? " sel" : "";
+    var faltaHora = !a.horaInici;
+    var faltaDia = !a.dia;
+    var fiTxt = faltaHora ? '<span class="csx-session-time warn">⚠ Falta hora</span>' : '<span class="csx-session-time">Fi: ' + horaFiSessio(a) + '</span>';
     return '<button class="csx-back-btn" id="a-tornar">← Tornar a la llista</button>' +
+      (faltaDia ? '<p class="csx-session-time warn" style="margin:-8px 0 12px;">⚠ Falta assignar el dia</p>' : '') +
       '<div class="csx-session-header">' +
       '<input id="a-edit-titol" placeholder="Títol" value="' + escapeHtml(a.titol || "") + '">' +
       '<input type="date" id="a-edit-dia" value="' + escapeHtml(a.dia || "") + '">' +
@@ -2724,7 +2772,7 @@
       selectTarifaEdicio +
       '<label class="csx-fix-check' + fixCls + '">' +
       '<input type="checkbox" id="a-edit-fixada"' + fixSel + '> Hora fixa</label>' +
-      '<span class="csx-session-time">Fi: ' + horaFiSessio(a) + '</span>' + avis +
+      fiTxt + avis +
       '<button class="csx-link-btn" id="a-eliminar">eliminar activitat</button>' +
       '</div>' +
       '<div class="csx-form-row">' +
@@ -2738,7 +2786,10 @@
   function descansDetailHtml(edicio, d, tots) {
     var fixSel = d.horaFixada ? " checked" : "";
     var fixCls = d.horaFixada ? " sel" : "";
+    var faltaDia = !d.dia;
+    var faltaHora = !d.horaInici;
     return '<button class="csx-back-btn" id="d-tornar">← Tornar a la llista</button>' +
+      (faltaDia ? '<p class="csx-session-time warn" style="margin:-8px 0 12px;">⚠ Falta assignar el dia</p>' : '') +
       '<div class="csx-session-header">' +
       '<input id="d-edit-nom" placeholder="Nom" value="' + escapeHtml(d.titol || "Descans") + '">' +
       '<div class="csx-dur-group">' +
@@ -2747,7 +2798,7 @@
       '</div>' +
       '<label class="csx-fix-check' + fixCls + '">' +
       '<input type="checkbox" id="d-edit-fixada"' + fixSel + '> Hora fixa</label>' +
-      '<span class="csx-session-time">Hora actual: ' + escapeHtml(d.horaInici || "—") + '–' + horaFiSessio(d) + '</span>' +
+      (faltaHora ? '<span class="csx-session-time warn">⚠ Falta hora</span>' : '<span class="csx-session-time">Hora actual: ' + escapeHtml(d.horaInici) + '–' + horaFiSessio(d) + '</span>') +
       '<button class="csx-link-btn" id="d-eliminar">eliminar descans</button>' +
       '</div>' +
       '<p style="font-size:12px;color:var(--text-dim);margin:0 0 8px;">Aquest descans es pot arrossegar lliurement a qualsevol dia i sala. Quan el col·loquis entre sessions, empenyerà les següents del mateix dia i sala. No s\'inclou a l\'exportació PDF/CSV.</p>';
@@ -2795,19 +2846,26 @@
     var selectTarifaEdicio = opcionsTarifesHtml(edicio.id, s.tarifaId || "").replace('id="s-tarifa"', 'id="s-edit-tarifa"');
     var fixSel = s.horaFixada ? " checked" : "";
     var fixCls = s.horaFixada ? " sel" : "";
+    var faltaHora = !s.horaInici;
+    var faltaDia = !s.dia;
+    var fiTxt = faltaHora ? '<span class="csx-session-time warn">⚠ Falta hora</span>' : '<span class="csx-session-time">Fi: ' + horaFiSessio(s) + '</span>';
 
     return '<button class="csx-back-btn" id="s-tornar">← Tornar a la llista</button>' +
+      (faltaDia ? '<p class="csx-session-time warn" style="margin:-8px 0 12px;">⚠ Falta assignar el dia</p>' : '') +
       '<div class="csx-session-header">' +
       '<input id="s-edit-nom" placeholder="Nom de la sessió (opcional)" value="' + escapeHtml(s.nom || "") + '">' +
       '<select id="s-edit-tipus">' + opcionsTipusHtml(s.tipus || "Curts") + '</select>' +
       llocSelect +
       selectTarifaEdicio +
       '<input type="date" id="s-edit-dia" value="' + escapeHtml(s.dia || "") + '">' +
-      '<input type="time" id="s-edit-hora" value="' + escapeHtml(s.horaInici) + '">' +
+      '<input type="time" id="s-edit-hora" value="' + escapeHtml(s.horaInici || "") + '">' +
       '<label class="csx-fix-check' + fixCls + '">' +
       '<input type="checkbox" id="s-edit-fixada"' + fixSel + '> Hora fixa</label>' +
-      '<span class="csx-session-time">Fi: ' + horaFiSessio(s) + '</span>' + avis +
+      fiTxt + avis +
       '<button class="csx-link-btn" id="s-eliminar-sessio">eliminar sessió</button>' +
+      '</div>' +
+      '<div class="csx-form-row">' +
+      '<input id="s-edit-descripcio" class="csx-grow" placeholder="Descripció (opcional)" value="' + escapeHtml(s.descripcio || "") + '">' +
       '</div>' +
       (catalogFiltrat.length ? '<div class="csx-day-subhead">' + escapeHtml(etiquetaSeccio) + '</div><div class="csx-form-row">' + selectCurts + '</div>' : '') +
       avisUsats +
@@ -2860,18 +2918,22 @@
     var selectTarifaEdicio = opcionsTarifesHtmlJuv(edicio.id, s.tarifaId || "").replace('id="j-tarifa"', 'id="j-edit-tarifa"');
     var fixSel = s.horaFixada ? " checked" : "";
     var fixCls = s.horaFixada ? " sel" : "";
+    var faltaHora = !s.horaInici;
+    var faltaDia = !s.dia;
+    var fiTxt = faltaHora ? '<span class="csx-session-time warn">⚠ Falta hora</span>' : '<span class="csx-session-time">Fi: ' + horaFiSessio(s) + '</span>';
 
     return '<button class="csx-back-btn" id="j-tornar">← Tornar a la llista</button>' +
+      (faltaDia ? '<p class="csx-session-time warn" style="margin:-8px 0 12px;">⚠ Falta assignar el dia</p>' : '') +
       '<div class="csx-session-header">' +
       '<input id="j-edit-nom" placeholder="Nom de la sessió juvenil" value="' + escapeHtml(s.nom || "") + '">' +
       '<span class="csx-session-tipus juv">Sessió Juvenil</span>' +
       llocSelect +
       selectTarifaEdicio +
       '<input type="date" id="j-edit-dia" value="' + escapeHtml(s.dia || "") + '">' +
-      '<input type="time" id="j-edit-hora" value="' + escapeHtml(s.horaInici) + '">' +
+      '<input type="time" id="j-edit-hora" value="' + escapeHtml(s.horaInici || "") + '">' +
       '<label class="csx-fix-check' + fixCls + '">' +
       '<input type="checkbox" id="j-edit-fixada"' + fixSel + '> Hora fixa</label>' +
-      '<span class="csx-session-time">Fi: ' + horaFiSessio(s) + '</span>' + avis +
+      fiTxt + avis +
       '<button class="csx-link-btn" id="j-eliminar-sessio">eliminar sessió</button>' +
       '</div>' +
       '<div class="csx-form-row">' +
@@ -3626,7 +3688,9 @@
         var eLloc = document.getElementById("s-edit-lloc");
         var eTarifa = document.getElementById("s-edit-tarifa");
         var eFix = document.getElementById("s-edit-fixada");
+        var eDesc = document.getElementById("s-edit-descripcio");
         function provar(nouDia, novaHora) {
+          if (!nouDia || !novaHora) return true;
           if (esFestival(state.cicleActiu) && (oberta.lloc || "cercle") === "cercle") {
             var prova = { id: oberta.id, dia: nouDia, horaInici: novaHora, curts: oberta.curts };
             if (hiHaConflicteCercle(prova, tots, oberta.id)) { window.alert("Solaparia amb una altra d'El Circol."); render(); return false; }
@@ -3639,6 +3703,7 @@
         if (eTipus) eTipus.addEventListener("change", function () { oberta.tipus = eTipus.value; desarSessions(state.cicleActiu, edicio.id); render(); });
         if (eTarifa) eTarifa.addEventListener("change", function () { oberta.tarifaId = eTarifa.value; desarSessions(state.cicleActiu, edicio.id); render(); });
         if (eFix) eFix.addEventListener("change", function () { oberta.horaFixada = eFix.checked; desarSessions(state.cicleActiu, edicio.id); render(); });
+        if (eDesc) eDesc.addEventListener("change", function () { oberta.descripcio = eDesc.value; desarSessions(state.cicleActiu, edicio.id); render(); });
         if (eLloc) eLloc.addEventListener("change", function () {
           var prova = { id: oberta.id, dia: oberta.dia, horaInici: oberta.horaInici, curts: oberta.curts };
           if (eLloc.value === "cercle" && hiHaConflicteCercle(prova, tots, oberta.id)) { window.alert("Solaparia amb una altra d'El Circol."); render(); return; }
@@ -3673,7 +3738,7 @@
             durMin: min, durSec: sec, pais: dc.pais || "",
             twitter: dc.twitter || "", facebook: dc.facebook || "", trailer: dc.trailer || ""
           });
-          if (esFestival(state.cicleActiu) && (oberta.lloc || "cercle") === "cercle" && hiHaConflicteCercle(oberta, tots, oberta.id)) {
+          if (esFestival(state.cicleActiu) && (oberta.lloc || "cercle") === "cercle" && oberta.dia && oberta.horaInici && hiHaConflicteCercle(oberta, tots, oberta.id)) {
             oberta.curts.pop(); window.alert("Solaparia. No afegit."); render(); return;
           }
           desarSessions(state.cicleActiu, edicio.id); render();
@@ -3756,6 +3821,7 @@
         var jDesc = document.getElementById("j-edit-descripcio");
         var jFix = document.getElementById("j-edit-fixada");
         function provarJuv(nouDia, novaHora) {
+          if (!nouDia || !novaHora) return true;
           if (esFestival(state.cicleActiu) && (juvOberta.lloc || "cercle") === "cercle") {
             var prova = { id: juvOberta.id, dia: nouDia, horaInici: novaHora, curts: juvOberta.curts };
             if (hiHaConflicteCercle(prova, tots, juvOberta.id)) { window.alert("Solaparia amb una altra d'El Circol."); render(); return false; }
@@ -3799,7 +3865,7 @@
             durMin: min, durSec: sec, pais: dc.pais || "",
             twitter: dc.twitter || "", facebook: dc.facebook || "", trailer: dc.trailer || ""
           });
-          if (esFestival(state.cicleActiu) && (juvOberta.lloc || "cercle") === "cercle" && hiHaConflicteCercle(juvOberta, tots, juvOberta.id)) {
+          if (esFestival(state.cicleActiu) && (juvOberta.lloc || "cercle") === "cercle" && juvOberta.dia && juvOberta.horaInici && hiHaConflicteCercle(juvOberta, tots, juvOberta.id)) {
             juvOberta.curts.pop(); window.alert("Solaparia. No afegit."); render(); return;
           }
           desarSessions(state.cicleActiu, edicio.id); render();
@@ -3863,6 +3929,7 @@
         var aCo = document.getElementById("a-edit-contacte");
         var aFix = document.getElementById("a-edit-fixada");
         function provarAct(nd, nh, nl, dh, dm) {
+          if (!nd || !nh) return true;
           if (nl === "cercle") {
             var p = { id: actOberta.id, dia: nd, horaInici: nh, tipusEntitat: "activitat", durHores: dh, durMinuts: dm };
             if (hiHaConflicteCercle(p, totes, actOberta.id)) { window.alert("Solaparia amb una altra d'El Circol."); render(); return false; }
@@ -3941,12 +4008,14 @@
         var sLloc = document.getElementById("s-lloc");
         var sTarifa = document.getElementById("s-tarifa");
         var sFix = document.getElementById("s-fixada");
+        var sDesc = document.getElementById("s-descripcio");
         if (sNom) sNom.addEventListener("input", function () { novaSessioForm.nom = sNom.value; });
         if (sDia) sDia.addEventListener("input", function () { novaSessioForm.dia = sDia.value; });
         if (sHora) sHora.addEventListener("input", function () { novaSessioForm.horaInici = sHora.value; });
         if (sTipus) sTipus.addEventListener("change", function () { novaSessioForm.tipus = sTipus.value; });
         if (sLloc) sLloc.addEventListener("change", function () { novaSessioForm.lloc = sLloc.value; });
         if (sTarifa) sTarifa.addEventListener("change", function () { novaSessioForm.tarifaId = sTarifa.value; });
+        if (sDesc) sDesc.addEventListener("input", function () { novaSessioForm.descripcio = sDesc.value; });
         if (sFix) sFix.addEventListener("change", function () {
           novaSessioForm.horaFixada = sFix.checked;
           var lbl = sFix.parentElement;
@@ -3954,22 +4023,22 @@
         });
         var elSCrear = document.getElementById("s-crear");
         if (elSCrear) elSCrear.addEventListener("click", function () {
-          if (!novaSessioForm.dia || !novaSessioForm.horaInici) { window.alert("Cal dia i hora."); return; }
           var ns = {
             id: uid(), nom: novaSessioForm.nom || "",
-            dia: novaSessioForm.dia, horaInici: novaSessioForm.horaInici,
+            dia: novaSessioForm.dia || "", horaInici: novaSessioForm.horaInici || "",
             tipus: novaSessioForm.tipus, curts: [],
             tarifaId: novaSessioForm.tarifaId || "",
-            horaFixada: !!novaSessioForm.horaFixada
+            horaFixada: !!novaSessioForm.horaFixada,
+            descripcio: novaSessioForm.descripcio || ""
           };
           if (esFestival(state.cicleActiu)) {
             ns.lloc = novaSessioForm.lloc;
-            if (ns.lloc === "cercle" && hiHaConflicteCercle(ns, sessionsEd.concat(activitatsEd), null)) { window.alert("Solapa amb una altra d'El Circol."); return; }
+            if (ns.lloc === "cercle" && ns.dia && ns.horaInici && hiHaConflicteCercle(ns, sessionsEd.concat(activitatsEd), null)) { window.alert("Solapa amb una altra d'El Circol."); return; }
           }
           if (!state.sessions[state.cicleActiu][edicio.id]) state.sessions[state.cicleActiu][edicio.id] = [];
           state.sessions[state.cicleActiu][edicio.id].push(ns);
           desarSessions(state.cicleActiu, edicio.id);
-          novaSessioForm = { nom: "", dia: "", horaInici: "", tipus: TIPUS_SESSIO[0], lloc: "cercle", tarifaId: "", horaFixada: false };
+          novaSessioForm = { nom: "", dia: "", horaInici: "", tipus: TIPUS_SESSIO[0], lloc: "cercle", tarifaId: "", horaFixada: false, descripcio: "" };
           render();
         });
 
@@ -4010,16 +4079,16 @@
         if (aAc2) aAc2.addEventListener("click", function () { novaActivitatForm.camps.push({ nom: "", valor: "" }); render(); });
         var elACrear = document.getElementById("a-crear");
         if (elACrear) elACrear.addEventListener("click", function () {
-          if (!novaActivitatForm.titol || !novaActivitatForm.dia) { window.alert("Cal títol i dia."); return; }
+          if (!novaActivitatForm.titol) { window.alert("Cal títol."); return; }
           var na = {
             id: uid(), tipusEntitat: "activitat",
-            titol: novaActivitatForm.titol, dia: novaActivitatForm.dia, horaInici: novaActivitatForm.horaInici,
+            titol: novaActivitatForm.titol, dia: novaActivitatForm.dia || "", horaInici: novaActivitatForm.horaInici || "",
             durHores: novaActivitatForm.durHores, durMinuts: novaActivitatForm.durMinuts,
             descripcio: novaActivitatForm.descripcio, contacte: novaActivitatForm.contacte,
             lloc: novaActivitatForm.lloc, tarifaId: novaActivitatForm.tarifaId || "", camps: novaActivitatForm.camps.slice(),
             horaFixada: !!novaActivitatForm.horaFixada
           };
-          if (na.lloc === "cercle" && hiHaConflicteCercle(na, activitatsEd.concat(sessionsEd), null)) { window.alert("Solapa amb una altra d'El Circol."); return; }
+          if (na.lloc === "cercle" && na.dia && na.horaInici && hiHaConflicteCercle(na, activitatsEd.concat(sessionsEd), null)) { window.alert("Solapa amb una altra d'El Circol."); return; }
           if (!state.activitats[edicio.id]) state.activitats[edicio.id] = [];
           state.activitats[edicio.id].push(na);
           desarActivitats(edicio.id);
@@ -4048,10 +4117,9 @@
         var elJCrear = document.getElementById("j-crear");
         if (elJCrear) elJCrear.addEventListener("click", function () {
           var f = state.juvenilForm || {};
-          if (!f.dia || !f.horaInici) { window.alert("Cal dia i hora."); return; }
           var ns = {
             id: uid(), nom: f.nom || "Sessió Juvenil",
-            dia: f.dia, horaInici: f.horaInici,
+            dia: f.dia || "", horaInici: f.horaInici || "",
             tipus: "Sessió Juvenil",
             curts: [], tarifaId: f.tarifaId || "",
             descripcio: f.descripcio || "",
@@ -4059,7 +4127,7 @@
           };
           if (esFestival(state.cicleActiu)) {
             ns.lloc = f.lloc || "cercle";
-            if (ns.lloc === "cercle" && hiHaConflicteCercle(ns, sessionsEd.concat(activitatsEd), null)) { window.alert("Solapa amb una altra d'El Circol."); return; }
+            if (ns.lloc === "cercle" && ns.dia && ns.horaInici && hiHaConflicteCercle(ns, sessionsEd.concat(activitatsEd), null)) { window.alert("Solapa amb una altra d'El Circol."); return; }
           }
           if (!state.sessions[state.cicleActiu][edicio.id]) state.sessions[state.cicleActiu][edicio.id] = [];
           state.sessions[state.cicleActiu][edicio.id].push(ns);
@@ -4150,7 +4218,7 @@
               return (x.dia || "") === draggedItemDia;
             });
             totsDia.sort(function (a, b) {
-              return (a.horaInici || "").localeCompare(b.horaInici || "");
+              return (a.horaInici || "99:99").localeCompare(b.horaInici || "99:99");
             });
 
             var ordreActual = totsDia.map(function (x) { return x.id; });
@@ -4672,7 +4740,7 @@
 
     dies.forEach(function (dia) {
       var items = perDia[dia].slice().sort(function (a, b) {
-        return (a.horaInici || "").localeCompare(b.horaInici || "");
+        return (a.horaInici || "99:99").localeCompare(b.horaInici || "99:99");
       });
       items.forEach(function (it) {
         var esAct = esActivitat(it);
@@ -4685,7 +4753,7 @@
         linies.push([
           dataLlarga(dia) || dia,
           it.horaInici || "",
-          horaFiSessio(it),
+          it.horaInici ? horaFiSessio(it) : "",
           titol, tipus, sala, preu, desc
         ].map(esc).join(","));
         if (!esAct && it.curts && it.curts.length > 0) {
@@ -4742,11 +4810,10 @@
 
     dies.forEach(function (dia) {
       var items = perDia[dia].slice().sort(function (a, b) {
-        return (a.horaInici || "").localeCompare(b.horaInici || "");
+        return (a.horaInici || "99:99").localeCompare(b.horaInici || "99:99");
       });
       html += '<h2>' + escapeHtml(dataLlarga(dia) || "Sense dia") + '</h2>';
 
-      // Blocs de sala consecutius
       var blocs = [];
       var blocActual = null;
       items.forEach(function (it) {
