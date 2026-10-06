@@ -1007,7 +1007,6 @@
     return c;
   }
   function normalitzarTarifa(t) {
-    // Neteja: elimina el camp lmpv antic si existeix
     if (t.lmpv !== undefined) delete t.lmpv;
     return t;
   }
@@ -3716,7 +3715,6 @@
             var t = state.tarifes[edId].filter(function (x) { return x.id === id; })[0];
             if (t) {
               t.preu = inp.value;
-              // Actualitzem NOMÉS el camp preu, evitant sobreescriure la resta
               db.ref("cryptshow/preus/" + edId + "/" + id + "/preu").set(inp.value);
             }
           });
@@ -3747,7 +3745,6 @@
             var novaTarifa = { id: uid(), nom: nom, preu: preu };
             if (!state.tarifes[edId]) state.tarifes[edId] = [];
             state.tarifes[edId].push(novaTarifa);
-            // Guardem només aquesta nova tarifa
             db.ref("cryptshow/preus/" + edId + "/" + novaTarifa.id).set(novaTarifa);
             render();
           });
@@ -4044,30 +4041,29 @@
           var esJuv = esSessioJuvenil(it);
           var titol = esAct ? (it.titol || "(sense títol)") : (it.nom || "(sense nom)");
           var preu = textPreuSessio(it, edicio.id);
-          var juvTag = esJuv ? ' <span style="color:#7a5e8a;font-size:10px;font-weight:600;">[SESSIÓ JUVENIL]</span>' : '';
+          var desc = it.descripcio || "";
+
+          // Línia principal: hora + títol + descripció + preu
+          var liniaPrincipal = escapeHtml(titol);
+          if (desc) liniaPrincipal += ' · <span style="color:#555;font-style:italic;">' + escapeHtml(desc) + '</span>';
+          if (preu) liniaPrincipal += ' · <span style="color:#a07630;font-size:11px;">' + escapeHtml(preu) + '</span>';
+
           html += '<tr class="' + (esJuv ? 'juv' : '') + '">' +
             '<td style="width:60px;">' + escapeHtml(it.horaInici || "") + '</td>' +
-            '<td class="titol-juv">' + escapeHtml(titol) + juvTag + (preu ? ' <span style="color:#a07630;font-size:11px;">· ' + escapeHtml(preu) + '</span>' : "") + '</td>' +
+            '<td class="titol-juv">' + liniaPrincipal + '</td>' +
             '</tr>';
+
+          // Curts: per a sessions normals I per a sessions juvenils
           if (!esAct && it.curts && it.curts.length > 0) {
             it.curts.forEach(function (c) {
+              var pais = c.pais || "";
+              var liniaCurt = escapeHtml(c.titol || "") + ' · ' + escapeHtml(durLabel(c));
+              if (pais) liniaCurt += ' · ' + escapeHtml(pais);
               html += '<tr class="curt">' +
                 '<td></td>' +
-                '<td class="titol">' + escapeHtml(c.titol || "") + ' · ' + escapeHtml(durLabel(c)) + '</td>' +
+                '<td class="titol">' + liniaCurt + '</td>' +
                 '</tr>';
             });
-          }
-          if (esAct && it.descripcio) {
-            html += '<tr class="curt">' +
-              '<td></td>' +
-              '<td class="titol">' + escapeHtml(it.descripcio) + '</td>' +
-              '</tr>';
-          }
-          if (esJuv && it.descripcio) {
-            html += '<tr class="curt">' +
-              '<td></td>' +
-              '<td class="titol" style="color:#5a3d6b;">' + escapeHtml(it.descripcio) + '</td>' +
-              '</tr>';
           }
         });
         html += '</tbody></table>';
