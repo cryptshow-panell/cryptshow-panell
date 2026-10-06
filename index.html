@@ -21,6 +21,7 @@
     --accent-descans: #6b5a3e;
     --accent-juv: #7a5e8a;
     --accent-tac: #4a7a8c;
+    --accent-fix: #b89b5e;
   }
   * { box-sizing: border-box; }
   html, body {
@@ -150,11 +151,6 @@
     background: var(--accent-juv); color: var(--text);
   }
   .csx-btn-juv:hover { background: #8f6fa0; }
-  .csx-btn-danger {
-    background: var(--accent-wine); color: var(--text);
-    border: 1px solid #a3383f;
-  }
-  .csx-btn-danger:hover { background: #a3383f; }
   .csx-link-btn {
     background: none; border: none; color: var(--text-dim);
     font-size: 12px; cursor: pointer; font-family: inherit;
@@ -267,12 +263,20 @@
     background: rgba(122,94,138,0.12);
     border-left: 3px solid var(--accent-juv);
   }
-  .csx-session-row-main { display: flex; gap: 16px; align-items: baseline; flex-wrap: wrap; }
+  .csx-session-row-main { display: flex; gap: 16px; align-items: baseline; flex-wrap: wrap; flex: 1; min-width: 0; }
   .csx-session-num {
     font-family: 'Fraunces', serif; font-weight: 600;
     color: var(--accent-amber);
   }
   .csx-session-time { color: var(--text-dim); font-size: 13px; }
+  .csx-session-sala {
+    font-size: 11px;
+    color: var(--accent-moss);
+    border: 1px solid var(--accent-moss);
+    padding: 2px 8px;
+    border-radius: 10px;
+    opacity: 0.85;
+  }
   .csx-session-tipus {
     font-size: 11px; color: var(--text-dim);
     border: 1px solid var(--border);
@@ -283,6 +287,24 @@
     border-color: var(--accent-juv);
   }
   .csx-session-count { color: var(--text-dim); font-size: 12px; flex-shrink: 0; }
+  .csx-session-del {
+    background: none; border: none;
+    color: var(--text-dim);
+    font-family: inherit;
+    font-size: 11px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 2px;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    flex-shrink: 0;
+  }
+  .csx-session-del:hover { color: var(--accent-wine); }
+  .csx-fix-ico {
+    color: var(--accent-fix);
+    font-size: 12px;
+    margin-left: 2px;
+  }
   .csx-back-btn {
     background: none; border: none; color: var(--text-dim);
     font-family: inherit; font-size: 13px; cursor: pointer;
@@ -297,17 +319,16 @@
   }
   .csx-session-header input { width: auto; }
 
-  .csx-lloc-bloc { margin-bottom: 18px; }
-  .csx-lloc-header {
-    font-size: 12px;
-    color: var(--accent-moss);
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    font-weight: 600;
-    margin: 14px 0 8px;
-    padding-bottom: 4px;
-    border-bottom: 1px dashed var(--border);
+  .csx-fix-check {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 13px; color: var(--text-dim);
+    background: rgba(184,155,94,0.10);
+    border: 1px solid var(--accent-fix);
+    padding: 6px 10px; border-radius: 2px;
+    cursor: pointer;
   }
+  .csx-fix-check input { accent-color: var(--accent-fix); cursor: pointer; }
+  .csx-fix-check.sel { color: var(--text); }
 
   .csx-premsa-wrap {
     width: 100%; max-height: 70vh; overflow: auto;
@@ -565,33 +586,6 @@
   }
   .csx-noacces h2 { margin-bottom: 12px; }
   .csx-noacces p { color: var(--text-dim); margin-bottom: 20px; }
-
-  .csx-alert {
-    background: rgba(193,134,60,0.12);
-    border: 1px solid var(--accent-amber);
-    border-left: 3px solid var(--accent-amber);
-    padding: 12px 16px;
-    margin-bottom: 20px;
-    font-size: 13px;
-    line-height: 1.5;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    flex-wrap: wrap;
-  }
-  .csx-alert button {
-    background: var(--accent-amber);
-    color: var(--bg);
-    border: none;
-    padding: 6px 12px;
-    font-family: inherit;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    border-radius: 2px;
-  }
-  .csx-alert button:hover { background: #d19b52; }
 
   .csx-modal-overlay {
     position: fixed;
@@ -1176,6 +1170,7 @@
       var ob = (typeof b.ordre === "number") ? b.ordre : 9999;
       return oa - ob;
     });
+    if (typeof s.horaFixada !== "boolean") s.horaFixada = false;
     return s;
   }
   function normalitzarActivitat(a) {
@@ -1185,6 +1180,7 @@
     if (!a.camps) a.camps = [];
     if (typeof a.ordre !== "number") a.ordre = 9999;
     if (a.tipusEntitat !== "descans") a.tipusEntitat = "activitat";
+    if (typeof a.horaFixada !== "boolean") a.horaFixada = false;
     return a;
   }
   function normalitzarCurt(c) {
@@ -1402,7 +1398,6 @@
     if (!pass) { mostrarMsgLogin("Cal la contrasenya."); return; }
     loginSubmit.disabled = true;
     auth.signInWithEmailAndPassword(email, pass).then(function () {
-      // ok
       loginPassword.value = "";
     }).catch(function (err) {
       console.error("Error login", err);
@@ -1410,6 +1405,7 @@
       if (err && err.code === "auth/user-not-found") msg += "Aquest correu no està registrat.";
       else if (err && err.code === "auth/wrong-password") msg += "Contrasenya incorrecta.";
       else if (err && err.code === "auth/invalid-email") msg += "El format del correu no és correcte.";
+      else if (err && err.code === "auth/invalid-credential") msg += "Correu o contrasenya incorrectes.";
       else if (err && err.code === "auth/too-many-requests") msg += "Massa intents. Espera una estona.";
       else msg += (err && err.message) || "Error desconegut.";
       mostrarMsgLogin(msg);
@@ -1551,7 +1547,12 @@
           ordre: i
         };
       });
-      var copia = { id: s.id, dia: s.dia, horaInici: s.horaInici, tipus: s.tipus || "Curts", nom: s.nom || "", curts: curtsObj, tarifaId: s.tarifaId || "" };
+      var copia = {
+        id: s.id, dia: s.dia, horaInici: s.horaInici,
+        tipus: s.tipus || "Curts", nom: s.nom || "",
+        curts: curtsObj, tarifaId: s.tarifaId || "",
+        horaFixada: !!s.horaFixada
+      };
       if (s.descripcio) copia.descripcio = s.descripcio;
       if (typeof s.ordre === "number") copia.ordre = s.ordre;
       if (esFestival(cicle)) copia.lloc = s.lloc || "cercle";
@@ -1657,6 +1658,72 @@
       if (seSolapen(s, o)) return true;
     }
     return false;
+  }
+
+  // ---- REORDENACIÓ per dia (nova lògica) ----
+  // Retorna { items: [itemsOrdenats], error: null | "missatge" }
+  function recalcularHoresDia(itemsDia, ordreNou) {
+    // itemsDia: array d'items del mateix dia (qualsevol tipus)
+    // ordreNou: array d'IDs en l'ordre desitjat
+    // Retorna { ok: true, resultat: { id: {horaInici} } } o { ok: false, missatge: "..." }
+
+    var mapItems = {};
+    itemsDia.forEach(function (it) { mapItems[it.id] = it; });
+
+    // Construïm l'array ordenat
+    var ordenats = [];
+    ordreNou.forEach(function (id) {
+      if (mapItems[id]) ordenats.push(mapItems[id]);
+    });
+
+    // Trobem l'hora base: la mínima de tots els items flexibles
+    // Si tots són fixos → no recalculem res
+    var hiHaFlexible = ordenats.some(function (it) { return !it.horaFixada; });
+    if (!hiHaFlexible) {
+      // Tots fixos: no toquem res
+      var resultat = {};
+      ordenats.forEach(function (it) { resultat[it.id] = it.horaInici; });
+      return { ok: true, resultat: resultat };
+    }
+
+    var horaBase = null;
+    ordenats.forEach(function (it) {
+      if (!it.horaFixada) {
+        var h = horaAMinuts(it.horaInici || "00:00");
+        if (horaBase === null || h < horaBase) horaBase = h;
+      }
+    });
+
+    var cursor = horaBase;
+    var resultat = {};
+    var errorMissatge = null;
+
+    for (var i = 0; i < ordenats.length; i++) {
+      var it = ordenats[i];
+      if (it.horaFixada) {
+        var hFix = horaAMinuts(it.horaInici || "00:00");
+        if (cursor > hFix) {
+          // Conflicte: no hi cap
+          var nomIt = esActivitat(it) ? (it.titol || "(sense títol)") : (it.nom || "(sense nom)");
+          errorMissatge = "No es pot reordenar.\n\n" +
+            "\"" + nomIt + "\" (" + llocLabel(it.lloc || "cercle") + ") està fixada a les " + (it.horaInici || "??") + ",\n" +
+            "però amb el nou ordre no hi ha prou espai abans.\n\n" +
+            "Solucions:\n" +
+            "· Treure la fixació d'aquesta sessió/activitat\n" +
+            "· Canviar la seva hora manualment\n" +
+            "· Reordenar-ho d'una altra manera";
+          return { ok: false, missatge: errorMissatge };
+        }
+        // Actualitzem el cursor a la seva hora + durada
+        resultat[it.id] = it.horaInici;
+        cursor = hFix + durMinItem(it);
+      } else {
+        resultat[it.id] = minutsAHora(cursor);
+        cursor += durMinItem(it);
+      }
+    }
+
+    return { ok: true, resultat: resultat };
   }
 
   function render() {
@@ -1882,13 +1949,11 @@
         btn.textContent = "Creant…";
         var password = generarContrasenyaTemporal();
 
-        // Guardem l'estat per restaurar-lo
         var appSecundaria = null;
         try {
           appSecundaria = firebase.initializeApp(firebaseConfig, "aux-crear-" + Date.now());
           var authAux = appSecundaria.auth();
           authAux.createUserWithEmailAndPassword(email, password).then(function () {
-            // Ara guardem l'usuari a la base de dades
             var now = Date.now();
             return db.ref("cryptshow/usuaris/" + emailKey(email)).set({
               email: email,
@@ -1897,10 +1962,8 @@
               creatPer: state.usuari.email
             });
           }).then(function () {
-            // Tanquem la sessió de l'app auxiliar
             return authAux.signOut();
           }).then(function () {
-            // Destruïm l'app auxiliar
             return appSecundaria.delete();
           }).then(function () {
             var rolsText = Object.keys(rolsSel).map(function (k) {
@@ -2003,7 +2066,7 @@
     }
   }
 
-  // ---- PANTALLA USUARIS ----
+  // ---- USUARIS ----
   function usuarisHtml() {
     if (!state.esAdmin) {
       return '<section class="csx-panel"><div class="csx-noacces">' +
@@ -2042,7 +2105,6 @@
       var accions = '';
       if (!esAdminActual) {
         accions += '<button class="csx-link-btn" data-edit-rol="' + escapeHtml(email) + '" style="margin-right:8px;">canviar rols</button>';
-        accions += '<button class="csx-link-btn" data-regen-pass="' + escapeHtml(email) + '" style="margin-right:8px;">regenerar contrasenya</button>';
       }
       if (email.toLowerCase() !== (state.usuari.email || "").toLowerCase()) {
         accions += '<button class="csx-link-btn" data-del-user="' + escapeHtml(email) + '">eliminar</button>';
@@ -2101,9 +2163,9 @@
   }
 
   var novaEdicioForm = { any: String(ANY_ACTUAL), nom: "" };
-  var novaSessioForm = { nom: "", dia: "", horaInici: "", tipus: TIPUS_SESSIO[0], lloc: "cercle", tarifaId: "" };
+  var novaSessioForm = { nom: "", dia: "", horaInici: "", tipus: TIPUS_SESSIO[0], lloc: "cercle", tarifaId: "", horaFixada: false };
   var novCurtForm = { titol: "", durMin: "", durSec: "" };
-  var novaActivitatForm = { titol: "", dia: "", horaInici: "", durHores: "", durMinuts: "", descripcio: "", contacte: "", lloc: "cercle", tarifaId: "", camps: [] };
+  var novaActivitatForm = { titol: "", dia: "", horaInici: "", durHores: "", durMinuts: "", descripcio: "", contacte: "", lloc: "cercle", tarifaId: "", camps: [], horaFixada: false };
   var novCurtFormCat = {
     seccio: "oficial",
     titol: "", titolOriginal: "", durada: "", pais: "",
@@ -2268,6 +2330,8 @@
 
   function descansFormHtml(edId) {
     var f = state.descansForm;
+    var fixSel = f.horaFixada ? " checked" : "";
+    var fixCls = f.horaFixada ? " sel" : "";
     return '<div class="csx-descans-form">' +
       '<div class="csx-eyebrow" style="margin-bottom:10px;">Nou descans</div>' +
       '<div class="csx-form-row" style="margin-bottom:0;">' +
@@ -2276,6 +2340,8 @@
       '<input type="number" id="d-dur-hores" min="0" style="width:50px;" placeholder="0" value="' + escapeHtml(f.durHores || "") + '"><span>h</span>' +
       '<input type="number" id="d-dur-minuts" min="0" max="59" style="width:50px;" placeholder="0" value="' + escapeHtml(f.durMinuts || "") + '"><span>min</span>' +
       '</div>' +
+      '<label class="csx-fix-check' + fixCls + '">' +
+      '<input type="checkbox" id="d-fixada"' + fixSel + '> Hora fixa</label>' +
       '<button class="csx-btn" id="d-crear">Crear</button>' +
       '<button class="csx-link-btn" id="d-cancelar">cancel·lar</button>' +
       '</div>' +
@@ -2284,11 +2350,13 @@
   }
 
   function juvenilFormHtml(edicioId) {
-    if (!state.juvenilForm) state.juvenilForm = { nom: "", dia: "", horaInici: "", lloc: "cercle", tarifaId: "", descripcio: "" };
+    if (!state.juvenilForm) state.juvenilForm = { nom: "", dia: "", horaInici: "", lloc: "cercle", tarifaId: "", descripcio: "", horaFixada: false };
     var f = state.juvenilForm;
     var formLloc = esFestival(state.cicleActiu)
       ? '<select id="j-lloc">' + opcionsLlocActivitatHtml(f.lloc || "cercle") + '</select>' : "";
     var selectTarifes = opcionsTarifesHtmlJuv(edicioId, f.tarifaId || "");
+    var fixSel = f.horaFixada ? " checked" : "";
+    var fixCls = f.horaFixada ? " sel" : "";
     return '<div class="csx-juvenil-form">' +
       '<div class="csx-eyebrow" style="margin-bottom:10px;color:var(--accent-juv);">Nova sessió juvenil</div>' +
       '<div class="csx-form-row" style="margin-bottom:10px;">' +
@@ -2297,6 +2365,8 @@
       '<input type="time" id="j-hora" value="' + escapeHtml(f.horaInici || "") + '">' +
       formLloc +
       selectTarifes +
+      '<label class="csx-fix-check' + fixCls + '">' +
+      '<input type="checkbox" id="j-fixada"' + fixSel + '> Hora fixa</label>' +
       '</div>' +
       '<div class="csx-form-row" style="margin-bottom:10px;">' +
       '<input id="j-descripcio" class="csx-grow" placeholder="Descripció" value="' + escapeHtml(f.descripcio || "") + '">' +
@@ -2323,44 +2393,66 @@
     var dies = Object.keys(perDia).sort();
 
     var html = dies.map(function (dia) {
-      var items = perDia[dia];
-
-      var perLloc = {};
-      items.forEach(function (it) {
-        var lloc = it.lloc || "cercle";
-        if (!perLloc[lloc]) perLloc[lloc] = [];
-        perLloc[lloc].push(it);
+      var items = perDia[dia].slice().sort(function (a, b) {
+        return (a.horaInici || "").localeCompare(b.horaInici || "");
       });
-
-      var ordreLloc = Object.keys(perLloc).sort(function (a, b) {
-        if (a === "cercle") return -1;
-        if (b === "cercle") return 1;
-        return llocLabel(a).localeCompare(llocLabel(b));
-      });
-
-      var blocs = ordreLloc.map(function (lloc) {
-        var itemsLloc = perLloc[lloc].slice().sort(function (a, b) {
-          return (a.horaInici || "").localeCompare(b.horaInici || "");
-        });
-        return '<div class="csx-lloc-bloc">' +
-          '<div class="csx-lloc-header">' + escapeHtml(llocLabel(lloc)) + '</div>' +
-          itemsLloc.map(function (it) {
-            if (esDescans(it)) return descansRowHtml(it, tots, true, edicio.id);
-            if (esSessioJuvenil(it)) return juvenilRowHtml(it, tots, true, edicio.id);
-            if (esActivitat(it)) return activitatRowHtml(it, tots, true, edicio.id);
-            return sessioRowHtml(it, tots, true, edicio.id);
-          }).join("") +
-          '</div>';
-      }).join("");
-
-      return '<div class="csx-day-group">' +
+      return '<div class="csx-day-group" data-dia="' + escapeHtml(dia) + '">' +
         '<div class="csx-day-header">' + escapeHtml(dataLlarga(dia) || "Sense dia") + '</div>' +
-        blocs +
+        '<div class="csx-session-list" data-llista-dia="' + escapeHtml(dia) + '">' +
+        items.map(function (it) {
+          return filaItemHtml(it, tots, edicio);
+        }).join("") +
+        '</div>' +
         '</div>';
     }).join("");
 
     html += '<p class="csx-nota-final">' + escapeHtml(NOTA_FINAL_PROGRAMACIO) + '</p>';
     return html;
+  }
+
+  function filaItemHtml(it, tots, edicio) {
+    var esAct = esActivitat(it);
+    var esJuv = esSessioJuvenil(it);
+    var esDes = esDescans(it);
+    var titol = esAct ? (it.titol || "(sense títol)") : (it.nom || "(sense nom)");
+    var sala = llocLabel(it.lloc || "cercle");
+    var preu = textPreuSessio(it, edicio.id);
+    var nCurts = it.curts ? it.curts.length : 0;
+    var etiquetaTipus = esJuv ? "Sessió Juvenil" : (esAct ? "Activitat" : (esDes ? "Descans" : "Sessió"));
+    var avis = teAvisSolapament(it, tots) ? '<span class="csx-avis" title="Solapa">⚠</span>' : "";
+    var fixIco = it.horaFixada ? '<span class="csx-fix-ico" title="Hora fixada">🔒</span>' : "";
+    var draggableAttr = ' draggable="true" data-drag-item="' + it.id + '"';
+    var dataObrir = esAct ? 'data-obrir-activitat="' + it.id + '"'
+                   : esJuv ? 'data-obrir-juvenil="' + it.id + '"'
+                   : esDes ? 'data-obrir-descans="' + it.id + '"'
+                   : 'data-obrir-sessio="' + it.id + '"';
+    var cls = "";
+    if (esDes) cls = " csx-descans";
+    else if (esJuv) cls = " csx-juv";
+
+    var durTxt = "";
+    if (esDes) {
+      var h = parseInt(it.durHores, 10); if (isNaN(h) || h < 0) h = 0;
+      var m = parseInt(it.durMinuts, 10); if (isNaN(m) || m < 0) m = 0;
+      if (h > 0 && m > 0) durTxt = h + "h " + m + "min";
+      else if (h > 0) durTxt = h + "h";
+      else durTxt = m + "min";
+    }
+
+    return '<div class="csx-session-row' + cls + '" ' + dataObrir + draggableAttr + ' data-item-id="' + it.id + '">' +
+      '<div class="csx-session-row-main">' +
+      '<span class="csx-drag-handle">⠿</span>' +
+      '<span class="csx-session-time">' + escapeHtml(it.horaInici || "—") + '–' + horaFiSessio(it) + fixIco + '</span>' +
+      '<span class="csx-session-num">' + escapeHtml(titol) + '</span>' +
+      '<span class="csx-session-sala">' + escapeHtml(sala) + '</span>' +
+      '<span class="csx-session-tipus' + (esJuv ? ' juv' : '') + '">' + escapeHtml(etiquetaTipus) + '</span>' +
+      (durTxt ? '<span class="csx-session-tipus" style="color:var(--accent-descans);border-color:var(--accent-descans);">' + durTxt + '</span>' : "") +
+      (preu ? '<span class="csx-session-tipus" style="color:var(--accent-amber);border-color:var(--accent-amber);">' + escapeHtml(preu) + '</span>' : "") +
+      avis +
+      '</div>' +
+      '<span class="csx-session-count">' + ((esAct || esDes) ? "" : nCurts + ' curts') + '</span>' +
+      '<button class="csx-session-del" data-del-item="' + it.id + '">eliminar</button>' +
+      '</div>';
   }
 
   function programacioFitxesHtml() {
@@ -2388,7 +2480,7 @@
     }
 
     if (!state.juvenilForm) {
-      state.juvenilForm = { nom: "", dia: "", horaInici: "", lloc: "cercle", tarifaId: "", descripcio: "" };
+      state.juvenilForm = { nom: "", dia: "", horaInici: "", lloc: "cercle", tarifaId: "", descripcio: "", horaFixada: false };
     }
 
     var sessionsEd = sessionsPerCicle(state.cicleActiu, edicio.id);
@@ -2440,15 +2532,17 @@
         var preu = textPreuSessio(it, edicio.id);
         var etiqueta = esJuv ? "Sessió Juvenil" : (esAct ? "Activitat" : "Sessió");
         var dades = esJuv ? 'data-obrir-juvenil="' + it.id + '"' : (esAct ? 'data-obrir-activitat="' + it.id + '"' : 'data-obrir-sessio="' + it.id + '"');
+        var fixIco = it.horaFixada ? ' <span class="csx-fix-ico" title="Hora fixada">🔒</span>' : '';
         return '<div class="csx-session-row' + (esJuv ? ' csx-juv' : '') + '" ' + dades + '>' +
           '<div class="csx-session-row-main">' +
           '<span class="csx-session-time">' + escapeHtml(diaTxt) + '</span>' +
-          '<span class="csx-session-time">' + hora + '</span>' +
+          '<span class="csx-session-time">' + hora + fixIco + '</span>' +
           '<span class="csx-session-num">' + escapeHtml(titol) + '</span>' +
           '<span class="csx-session-tipus' + (esJuv ? ' juv' : '') + '">' + etiqueta + '</span>' +
           (preu ? '<span class="csx-session-tipus" style="color:var(--accent-amber);border-color:var(--accent-amber);">' + escapeHtml(preu) + '</span>' : "") +
           '</div>' +
           '<span class="csx-session-count">' + (esAct ? "" : (it.curts ? it.curts.length : 0) + ' curts') + '</span>' +
+          '<button class="csx-session-del" data-del-item="' + it.id + '">eliminar</button>' +
           '</div>';
       }).join("");
 
@@ -2456,6 +2550,8 @@
       ? '<select id="s-lloc">' + opcionsLlocSessioHtml(novaSessioForm.lloc) + '</select>' : "";
 
     var selectTarifes = opcionsTarifesHtml(edicio.id, novaSessioForm.tarifaId);
+    var sFixSel = novaSessioForm.horaFixada ? " checked" : "";
+    var sFixCls = novaSessioForm.horaFixada ? " sel" : "";
 
     return '<div class="csx-panel-head"><div>' +
       '<div class="csx-eyebrow">Fitxes de creació · ' + escapeHtml(cicleLabel(CICLES.filter(function (c) { return c.id === state.cicleActiu; })[0])) + '</div>' +
@@ -2470,6 +2566,8 @@
       formLloc +
       '<select id="s-tipus">' + opcionsTipusHtml(novaSessioForm.tipus) + '</select>' +
       selectTarifes +
+      '<label class="csx-fix-check' + sFixCls + '">' +
+      '<input type="checkbox" id="s-fixada"' + sFixSel + '> Hora fixa</label>' +
       '<button class="csx-btn" id="s-crear">Crear sessió</button>' +
       '</div>' +
 
@@ -2533,75 +2631,6 @@
     return '<select id="j-tarifa">' + html + '</select>';
   }
 
-  function sessioRowHtml(s, totes, arrossegable, edId) {
-    var avis = teAvisSolapament(s, totes) ? '<span class="csx-avis" title="Solapa">⚠</span>' : "";
-    var nansa = arrossegable ? '<span class="csx-drag-handle">⠿</span>' : "";
-    var etiqueta = s.nom ? escapeHtml(s.nom) : "(sense nom)";
-    var draggableAttr = arrossegable ? ' draggable="true" data-drag-item="' + s.id + '" data-tipus-item="sessio"' : "";
-    var preu = edId ? textPreuSessio(s, edId) : "";
-    var nCurts = s.curts ? s.curts.length : 0;
-    return '<div class="csx-session-row" data-obrir-sessio="' + s.id + '"' + draggableAttr + '>' +
-      '<div class="csx-session-row-main">' + nansa +
-      '<span class="csx-session-time">' + escapeHtml(s.horaInici || "—") + '–' + horaFiSessio(s) + '</span>' +
-      '<span class="csx-session-num">' + etiqueta + '</span>' +
-      (preu ? '<span class="csx-session-tipus" style="color:var(--accent-amber);border-color:var(--accent-amber);">' + escapeHtml(preu) + '</span>' : "") +
-      avis +
-      '</div>' +
-      '<span class="csx-session-count">' + nCurts + ' curts</span>' +
-      '</div>';
-  }
-
-  function juvenilRowHtml(s, totes, arrossegable, edId) {
-    var avis = teAvisSolapament(s, totes) ? '<span class="csx-avis" title="Solapa">⚠</span>' : "";
-    var nansa = arrossegable ? '<span class="csx-drag-handle">⠿</span>' : "";
-    var etiqueta = s.nom ? escapeHtml(s.nom) : "(sense nom)";
-    var draggableAttr = arrossegable ? ' draggable="true" data-drag-item="' + s.id + '" data-tipus-item="sessio"' : "";
-    var preu = edId ? textPreuSessio(s, edId) : "";
-    var nCurts = s.curts ? s.curts.length : 0;
-    return '<div class="csx-session-row csx-juv" data-obrir-juvenil="' + s.id + '"' + draggableAttr + '>' +
-      '<div class="csx-session-row-main">' + nansa +
-      '<span class="csx-session-time">' + escapeHtml(s.horaInici || "—") + '–' + horaFiSessio(s) + '</span>' +
-      '<span class="csx-session-num">' + etiqueta + '</span>' +
-      '<span class="csx-session-tipus juv">Sessió Juvenil</span>' +
-      (preu ? '<span class="csx-session-tipus" style="color:var(--accent-amber);border-color:var(--accent-amber);">' + escapeHtml(preu) + '</span>' : "") +
-      (s.descripcio ? '<span class="csx-session-time" style="font-style:italic;">' + escapeHtml(s.descripcio) + '</span>' : "") +
-      avis +
-      '</div>' +
-      '<span class="csx-session-count">' + nCurts + ' curts</span>' +
-      '</div>';
-  }
-
-  function activitatRowHtml(a, tots, arrossegable, edId) {
-    var avis = teAvisSolapament(a, tots) ? '<span class="csx-avis" title="Solapa">⚠</span>' : "";
-    var nansa = arrossegable ? '<span class="csx-drag-handle">⠿</span>' : "";
-    var draggableAttr = arrossegable ? ' draggable="true" data-drag-item="' + a.id + '" data-tipus-item="activitat"' : "";
-    var preu = (edId && a.tarifaId) ? textPreuSessio(a, edId) : "";
-    return '<div class="csx-session-row" data-obrir-activitat="' + a.id + '"' + draggableAttr + '>' +
-      '<div class="csx-session-row-main">' + nansa +
-      '<span class="csx-session-time">' + escapeHtml(a.horaInici || "—") + '–' + horaFiSessio(a) + '</span>' +
-      '<span class="csx-session-num">' + escapeHtml(a.titol || "(sense títol)") + '</span>' +
-      (preu ? '<span class="csx-session-tipus" style="color:var(--accent-amber);border-color:var(--accent-amber);">' + escapeHtml(preu) + '</span>' : "") +
-      avis +
-      '</div><span class="csx-session-count"></span></div>';
-  }
-  function descansRowHtml(d, tots, arrossegable, edId) {
-    var nansa = arrossegable ? '<span class="csx-drag-handle">⠿</span>' : "";
-    var draggableAttr = arrossegable ? ' draggable="true" data-drag-item="' + d.id + '" data-tipus-item="descans"' : "";
-    var durTxt = (function () {
-      var h = parseInt(d.durHores, 10); if (isNaN(h) || h < 0) h = 0;
-      var m = parseInt(d.durMinuts, 10); if (isNaN(m) || m < 0) m = 0;
-      if (h > 0 && m > 0) return h + "h " + m + "min";
-      if (h > 0) return h + "h";
-      return m + "min";
-    })();
-    return '<div class="csx-session-row csx-descans" data-obrir-descans="' + d.id + '"' + draggableAttr + '>' +
-      '<div class="csx-session-row-main">' + nansa +
-      '<span class="csx-session-time">' + escapeHtml(d.horaInici || "—") + '–' + horaFiSessio(d) + '</span>' +
-      '<span class="csx-session-num">' + escapeHtml(d.titol || "Descans") + '</span>' +
-      '<span class="csx-session-tipus" style="color:var(--accent-descans);border-color:var(--accent-descans);">' + durTxt + '</span>' +
-      '</div><span class="csx-session-count"></span></div>';
-  }
-
   function activitatFormHtml(edId) {
     var campsHtml = novaActivitatForm.camps.map(function (cp, i) {
       return '<div class="csx-form-row" style="margin-bottom:6px;">' +
@@ -2611,6 +2640,8 @@
         '</div>';
     }).join("");
     var selectTarifes = edId ? opcionsTarifesHtmlActivitat(edId, novaActivitatForm.tarifaId) : "";
+    var fixSel = novaActivitatForm.horaFixada ? " checked" : "";
+    var fixCls = novaActivitatForm.horaFixada ? " sel" : "";
     return '<div class="csx-form-row">' +
       '<input id="a-titol" class="csx-grow" placeholder="Títol de l\'activitat" value="' + escapeHtml(novaActivitatForm.titol) + '">' +
       '<input type="date" id="a-dia" value="' + escapeHtml(novaActivitatForm.dia) + '">' +
@@ -2623,6 +2654,8 @@
       '</div>' +
       '<select id="a-lloc">' + opcionsLlocActivitatHtml(novaActivitatForm.lloc) + '</select>' +
       selectTarifes +
+      '<label class="csx-fix-check' + fixCls + '">' +
+      '<input type="checkbox" id="a-fixada"' + fixSel + '> Hora fixa</label>' +
       '<input id="a-contacte" placeholder="Contacte" value="' + escapeHtml(novaActivitatForm.contacte) + '">' +
       '</div>' +
       '<div class="csx-form-row">' +
@@ -2649,6 +2682,8 @@
   function activitatDetailHtml(edicio, a, tots) {
     var avis = teAvisSolapament(a, tots) ? '<span class="csx-avis">⚠ es solapa amb una altra sessió/activitat</span>' : "";
     var selectTarifaEdicio = opcionsTarifesHtmlActivitat(edicio.id, a.tarifaId || "").replace('id="a-tarifa"', 'id="a-edit-tarifa"');
+    var fixSel = a.horaFixada ? " checked" : "";
+    var fixCls = a.horaFixada ? " sel" : "";
     return '<button class="csx-back-btn" id="a-tornar">← Tornar a la llista</button>' +
       '<div class="csx-session-header">' +
       '<input id="a-edit-titol" placeholder="Títol" value="' + escapeHtml(a.titol || "") + '">' +
@@ -2660,6 +2695,8 @@
       '</div>' +
       '<select id="a-edit-lloc">' + opcionsLlocActivitatHtml(a.lloc || "cercle") + '</select>' +
       selectTarifaEdicio +
+      '<label class="csx-fix-check' + fixCls + '">' +
+      '<input type="checkbox" id="a-edit-fixada"' + fixSel + '> Hora fixa</label>' +
       '<span class="csx-session-time">Fi: ' + horaFiSessio(a) + '</span>' + avis +
       '<button class="csx-link-btn" id="a-eliminar">eliminar activitat</button>' +
       '</div>' +
@@ -2672,6 +2709,8 @@
   }
 
   function descansDetailHtml(edicio, d, tots) {
+    var fixSel = d.horaFixada ? " checked" : "";
+    var fixCls = d.horaFixada ? " sel" : "";
     return '<button class="csx-back-btn" id="d-tornar">← Tornar a la llista</button>' +
       '<div class="csx-session-header">' +
       '<input id="d-edit-nom" placeholder="Nom" value="' + escapeHtml(d.titol || "Descans") + '">' +
@@ -2679,6 +2718,8 @@
       '<input type="number" id="d-edit-dur-hores" min="0" style="width:50px;" value="' + escapeHtml(d.durHores) + '"><span>h</span>' +
       '<input type="number" id="d-edit-dur-minuts" min="0" max="59" style="width:50px;" value="' + escapeHtml(d.durMinuts) + '"><span>min</span>' +
       '</div>' +
+      '<label class="csx-fix-check' + fixCls + '">' +
+      '<input type="checkbox" id="d-edit-fixada"' + fixSel + '> Hora fixa</label>' +
       '<span class="csx-session-time">Hora actual: ' + escapeHtml(d.horaInici || "—") + '–' + horaFiSessio(d) + '</span>' +
       '<button class="csx-link-btn" id="d-eliminar">eliminar descans</button>' +
       '</div>' +
@@ -2725,6 +2766,8 @@
       ? '<p style="font-size:11px;color:var(--text-dim);margin:4px 0 0;">' + nAmagats + ' curt(s) ja programats en altres sessions no es mostren.</p>' : "";
 
     var selectTarifaEdicio = opcionsTarifesHtml(edicio.id, s.tarifaId || "").replace('id="s-tarifa"', 'id="s-edit-tarifa"');
+    var fixSel = s.horaFixada ? " checked" : "";
+    var fixCls = s.horaFixada ? " sel" : "";
 
     return '<button class="csx-back-btn" id="s-tornar">← Tornar a la llista</button>' +
       '<div class="csx-session-header">' +
@@ -2734,6 +2777,8 @@
       selectTarifaEdicio +
       '<input type="date" id="s-edit-dia" value="' + escapeHtml(s.dia || "") + '">' +
       '<input type="time" id="s-edit-hora" value="' + escapeHtml(s.horaInici) + '">' +
+      '<label class="csx-fix-check' + fixCls + '">' +
+      '<input type="checkbox" id="s-edit-fixada"' + fixSel + '> Hora fixa</label>' +
       '<span class="csx-session-time">Fi: ' + horaFiSessio(s) + '</span>' + avis +
       '<button class="csx-link-btn" id="s-eliminar-sessio">eliminar sessió</button>' +
       '</div>' +
@@ -2786,6 +2831,8 @@
       ? '<p style="font-size:11px;color:var(--text-dim);margin:4px 0 0;">' + nAmagats + ' curt(s) ja programats en altres sessions juvenils no es mostren.</p>' : "";
 
     var selectTarifaEdicio = opcionsTarifesHtmlJuv(edicio.id, s.tarifaId || "").replace('id="j-tarifa"', 'id="j-edit-tarifa"');
+    var fixSel = s.horaFixada ? " checked" : "";
+    var fixCls = s.horaFixada ? " sel" : "";
 
     return '<button class="csx-back-btn" id="j-tornar">← Tornar a la llista</button>' +
       '<div class="csx-session-header">' +
@@ -2795,6 +2842,8 @@
       selectTarifaEdicio +
       '<input type="date" id="j-edit-dia" value="' + escapeHtml(s.dia || "") + '">' +
       '<input type="time" id="j-edit-hora" value="' + escapeHtml(s.horaInici) + '">' +
+      '<label class="csx-fix-check' + fixCls + '">' +
+      '<input type="checkbox" id="j-edit-fixada"' + fixSel + '> Hora fixa</label>' +
       '<span class="csx-session-time">Fi: ' + horaFiSessio(s) + '</span>' + avis +
       '<button class="csx-link-btn" id="j-eliminar-sessio">eliminar sessió</button>' +
       '</div>' +
@@ -3305,43 +3354,10 @@
           render();
         });
       });
-      main.querySelectorAll("[data-regen-pass]").forEach(function (btn) {
-        btn.addEventListener("click", function () {
-          var email = btn.getAttribute("data-regen-pass");
-          if (!window.confirm("Regenerar la contrasenya de " + email + "?\n\nLa contrasenya actual deixarà de funcionar.")) return;
-          var novaPass = generarContrasenyaTemporal();
-          var appSec = null;
-          try {
-            appSec = firebase.initializeApp(firebaseConfig, "aux-regen-" + Date.now());
-            var authAux = appSec.auth();
-            authAux.signInWithEmailAndPassword(email, "dummy-wrong-pass-to-fail").catch(function () {
-              // Ignorem l'error, només volem el context per canviar la contrasenya... 
-              // En realitat no podem canviar la contrasenya d'un altre usuari des del client.
-              // Cal usar Firebase Admin SDK o l'usuari ha de fer "He oblidat la contrasenya".
-            }).then(function () {
-              // Mostrem un missatge alternatiu
-            });
-            // Com que no podem canviar la contrasenya d'un altre usuari des del client,
-            // el que fem és enviar un correu de restabliment.
-            appSec.delete().then(function () {
-              auth.sendPasswordResetEmail(email).then(function () {
-                window.alert("S'ha enviat un correu a " + email + " perquè pugui restablir la seva contrasenya.");
-              }).catch(function (err) {
-                console.error("Error enviant reset", err);
-                window.alert("No s'ha pogut enviar el correu de restabliment.");
-              });
-            });
-          } catch (e) {
-            console.error("Error", e);
-            window.alert("No s'ha pogut regenerar la contrasenya.");
-          }
-        });
-      });
       main.querySelectorAll("[data-del-user]").forEach(function (btn) {
         btn.addEventListener("click", function () {
           var email = btn.getAttribute("data-del-user");
           if (!window.confirm("Eliminar l'usuari " + email + "?\n\nAquesta acció no es pot desfer.")) return;
-          // Eliminar de la base de dades (Firebase Auth el deixem per si de cas, ja que no podem eliminar-lo des del client)
           db.ref("cryptshow/usuaris/" + emailKey(email)).remove().then(function () {
             window.alert("L'usuari ha estat eliminat del sistema.");
             render();
@@ -3461,17 +3477,24 @@
 
       var btnAfegirDescans = document.getElementById("prog-afegir-descans");
       if (btnAfegirDescans) btnAfegirDescans.addEventListener("click", function () {
-        state.descansForm = { nom: "Descans", durHores: "", durMinuts: "" };
+        state.descansForm = { nom: "Descans", durHores: "", durMinuts: "", horaFixada: false };
         render();
       });
 
+      // Handlers del formulari de descans
       if (state.descansForm) {
         var dNom = document.getElementById("d-nom");
         var dDh = document.getElementById("d-dur-hores");
         var dDm = document.getElementById("d-dur-minuts");
+        var dFix = document.getElementById("d-fixada");
         if (dNom) dNom.addEventListener("input", function () { state.descansForm.nom = dNom.value; });
         if (dDh) dDh.addEventListener("input", function () { state.descansForm.durHores = dDh.value; });
         if (dDm) dDm.addEventListener("input", function () { state.descansForm.durMinuts = dDm.value; });
+        if (dFix) dFix.addEventListener("change", function () {
+          state.descansForm.horaFixada = dFix.checked;
+          var lbl = dFix.parentElement;
+          if (lbl) lbl.className = "csx-fix-check" + (dFix.checked ? " sel" : "");
+        });
         var dCancel = document.getElementById("d-cancelar");
         if (dCancel) dCancel.addEventListener("click", function () { state.descansForm = null; render(); });
         var dCrear = document.getElementById("d-crear");
@@ -3510,7 +3533,8 @@
             titol: f.nom || "Descans",
             dia: primerDia, horaInici: horaInici,
             durHores: f.durHores, durMinuts: f.durMinuts,
-            lloc: "cercle", camps: []
+            lloc: "cercle", camps: [],
+            horaFixada: !!f.horaFixada
           };
           if (!state.activitats[edicio.id]) state.activitats[edicio.id] = [];
           state.activitats[edicio.id].push(nd);
@@ -3545,9 +3569,11 @@
         var dENom = document.getElementById("d-edit-nom");
         var dEDh = document.getElementById("d-edit-dur-hores");
         var dEDm = document.getElementById("d-edit-dur-minuts");
+        var dEFix = document.getElementById("d-edit-fixada");
         if (dENom) dENom.addEventListener("change", function () { desOberta.titol = dENom.value; desarActivitats(edicio.id); render(); });
         if (dEDh) dEDh.addEventListener("change", function () { desOberta.durHores = dEDh.value; desarActivitats(edicio.id); render(); });
         if (dEDm) dEDm.addEventListener("change", function () { desOberta.durMinuts = dEDm.value; desarActivitats(edicio.id); render(); });
+        if (dEFix) dEFix.addEventListener("change", function () { desOberta.horaFixada = dEFix.checked; desarActivitats(edicio.id); render(); });
       } else if (oberta) {
         var elSTornar = document.getElementById("s-tornar");
         if (elSTornar) elSTornar.addEventListener("click", function () { state.sessioOberta = null; render(); });
@@ -3566,6 +3592,7 @@
         var eTipus = document.getElementById("s-edit-tipus");
         var eLloc = document.getElementById("s-edit-lloc");
         var eTarifa = document.getElementById("s-edit-tarifa");
+        var eFix = document.getElementById("s-edit-fixada");
         function provar(nouDia, novaHora) {
           if (esFestival(state.cicleActiu) && (oberta.lloc || "cercle") === "cercle") {
             var prova = { id: oberta.id, dia: nouDia, horaInici: novaHora, curts: oberta.curts };
@@ -3578,6 +3605,7 @@
         if (eNom) eNom.addEventListener("change", function () { oberta.nom = eNom.value; desarSessions(state.cicleActiu, edicio.id); render(); });
         if (eTipus) eTipus.addEventListener("change", function () { oberta.tipus = eTipus.value; desarSessions(state.cicleActiu, edicio.id); render(); });
         if (eTarifa) eTarifa.addEventListener("change", function () { oberta.tarifaId = eTarifa.value; desarSessions(state.cicleActiu, edicio.id); render(); });
+        if (eFix) eFix.addEventListener("change", function () { oberta.horaFixada = eFix.checked; desarSessions(state.cicleActiu, edicio.id); render(); });
         if (eLloc) eLloc.addEventListener("change", function () {
           var prova = { id: oberta.id, dia: oberta.dia, horaInici: oberta.horaInici, curts: oberta.curts };
           if (eLloc.value === "cercle" && hiHaConflicteCercle(prova, tots, oberta.id)) { window.alert("Solaparia amb una altra d'El Circol."); render(); return; }
@@ -3693,6 +3721,7 @@
         var jLloc = document.getElementById("j-edit-lloc");
         var jTarifa = document.getElementById("j-edit-tarifa");
         var jDesc = document.getElementById("j-edit-descripcio");
+        var jFix = document.getElementById("j-edit-fixada");
         function provarJuv(nouDia, novaHora) {
           if (esFestival(state.cicleActiu) && (juvOberta.lloc || "cercle") === "cercle") {
             var prova = { id: juvOberta.id, dia: nouDia, horaInici: novaHora, curts: juvOberta.curts };
@@ -3705,6 +3734,7 @@
         if (jNom) jNom.addEventListener("change", function () { juvOberta.nom = jNom.value; desarSessions(state.cicleActiu, edicio.id); render(); });
         if (jTarifa) jTarifa.addEventListener("change", function () { juvOberta.tarifaId = jTarifa.value; desarSessions(state.cicleActiu, edicio.id); render(); });
         if (jDesc) jDesc.addEventListener("change", function () { juvOberta.descripcio = jDesc.value; desarSessions(state.cicleActiu, edicio.id); render(); });
+        if (jFix) jFix.addEventListener("change", function () { juvOberta.horaFixada = jFix.checked; desarSessions(state.cicleActiu, edicio.id); render(); });
         if (jLloc) jLloc.addEventListener("change", function () {
           var prova = { id: juvOberta.id, dia: juvOberta.dia, horaInici: juvOberta.horaInici, curts: juvOberta.curts };
           if (jLloc.value === "cercle" && hiHaConflicteCercle(prova, tots, juvOberta.id)) { window.alert("Solaparia amb una altra d'El Circol."); render(); return; }
@@ -3798,6 +3828,7 @@
         var aL = document.getElementById("a-edit-lloc");
         var aDe = document.getElementById("a-edit-descripcio");
         var aCo = document.getElementById("a-edit-contacte");
+        var aFix = document.getElementById("a-edit-fixada");
         function provarAct(nd, nh, nl, dh, dm) {
           if (nl === "cercle") {
             var p = { id: actOberta.id, dia: nd, horaInici: nh, tipusEntitat: "activitat", durHores: dh, durMinuts: dm };
@@ -3811,6 +3842,7 @@
         if (aDh) aDh.addEventListener("change", function () { if (!provarAct(actOberta.dia, actOberta.horaInici, actOberta.lloc, aDh.value, actOberta.durMinuts)) return; actOberta.durHores = aDh.value; desarActivitats(edicio.id); render(); });
         if (aDm) aDm.addEventListener("change", function () { if (!provarAct(actOberta.dia, actOberta.horaInici, actOberta.lloc, actOberta.durHores, aDm.value)) return; actOberta.durMinuts = aDm.value; desarActivitats(edicio.id); render(); });
         if (aL) aL.addEventListener("change", function () { if (!provarAct(actOberta.dia, actOberta.horaInici, aL.value, actOberta.durHores, actOberta.durMinuts)) return; actOberta.lloc = aL.value; desarActivitats(edicio.id); render(); });
+        if (aFix) aFix.addEventListener("change", function () { actOberta.horaFixada = aFix.checked; desarActivitats(edicio.id); render(); });
         var aEditTarifa = document.getElementById("a-edit-tarifa");
         if (aEditTarifa) aEditTarifa.addEventListener("change", function () { actOberta.tarifaId = aEditTarifa.value; desarActivitats(edicio.id); });
         if (aDe) aDe.addEventListener("change", function () { actOberta.descripcio = aDe.value; desarActivitats(edicio.id); });
@@ -3836,25 +3868,38 @@
         var aAc = document.getElementById("a-edit-afegir-camp");
         if (aAc) aAc.addEventListener("click", function () { if (!actOberta.camps) actOberta.camps = []; actOberta.camps.push({ nom: "", valor: "" }); render(); });
       } else if (state.programacioVista === "fitxes") {
+        // Handlers per obrir detall
         main.querySelectorAll("[data-obrir-sessio]").forEach(function (row) {
-          row.addEventListener("click", function () {
+          row.addEventListener("click", function (e) {
+            if (e.target.closest && e.target.closest("[data-del-item]")) return;
             state.sessioOberta = row.getAttribute("data-obrir-sessio");
             state.activitatOberta = null; state.descansOberta = null; state.juvenilOberta = null;
             render();
           });
         });
         main.querySelectorAll("[data-obrir-juvenil]").forEach(function (row) {
-          row.addEventListener("click", function () {
+          row.addEventListener("click", function (e) {
+            if (e.target.closest && e.target.closest("[data-del-item]")) return;
             state.juvenilOberta = row.getAttribute("data-obrir-juvenil");
             state.sessioOberta = null; state.activitatOberta = null; state.descansOberta = null;
             render();
           });
         });
         main.querySelectorAll("[data-obrir-activitat]").forEach(function (row) {
-          row.addEventListener("click", function () {
+          row.addEventListener("click", function (e) {
+            if (e.target.closest && e.target.closest("[data-del-item]")) return;
             state.activitatOberta = row.getAttribute("data-obrir-activitat");
             state.sessioOberta = null; state.descansOberta = null; state.juvenilOberta = null;
             render();
+          });
+        });
+
+        // Handlers de botó eliminar a la llista
+        main.querySelectorAll("[data-del-item]").forEach(function (btn) {
+          btn.addEventListener("click", function (e) {
+            e.stopPropagation();
+            var id = btn.getAttribute("data-del-item");
+            eliminarItemPerId(id, edicio.id);
           });
         });
 
@@ -3864,16 +3909,28 @@
         var sTipus = document.getElementById("s-tipus");
         var sLloc = document.getElementById("s-lloc");
         var sTarifa = document.getElementById("s-tarifa");
+        var sFix = document.getElementById("s-fixada");
         if (sNom) sNom.addEventListener("input", function () { novaSessioForm.nom = sNom.value; });
         if (sDia) sDia.addEventListener("input", function () { novaSessioForm.dia = sDia.value; });
         if (sHora) sHora.addEventListener("input", function () { novaSessioForm.horaInici = sHora.value; });
         if (sTipus) sTipus.addEventListener("change", function () { novaSessioForm.tipus = sTipus.value; });
         if (sLloc) sLloc.addEventListener("change", function () { novaSessioForm.lloc = sLloc.value; });
         if (sTarifa) sTarifa.addEventListener("change", function () { novaSessioForm.tarifaId = sTarifa.value; });
+        if (sFix) sFix.addEventListener("change", function () {
+          novaSessioForm.horaFixada = sFix.checked;
+          var lbl = sFix.parentElement;
+          if (lbl) lbl.className = "csx-fix-check" + (sFix.checked ? " sel" : "");
+        });
         var elSCrear = document.getElementById("s-crear");
         if (elSCrear) elSCrear.addEventListener("click", function () {
           if (!novaSessioForm.dia || !novaSessioForm.horaInici) { window.alert("Cal dia i hora."); return; }
-          var ns = { id: uid(), nom: novaSessioForm.nom || "", dia: novaSessioForm.dia, horaInici: novaSessioForm.horaInici, tipus: novaSessioForm.tipus, curts: [], tarifaId: novaSessioForm.tarifaId || "" };
+          var ns = {
+            id: uid(), nom: novaSessioForm.nom || "",
+            dia: novaSessioForm.dia, horaInici: novaSessioForm.horaInici,
+            tipus: novaSessioForm.tipus, curts: [],
+            tarifaId: novaSessioForm.tarifaId || "",
+            horaFixada: !!novaSessioForm.horaFixada
+          };
           if (esFestival(state.cicleActiu)) {
             ns.lloc = novaSessioForm.lloc;
             if (ns.lloc === "cercle" && hiHaConflicteCercle(ns, sessionsEd.concat(activitatsEd), null)) { window.alert("Solapa amb una altra d'El Circol."); return; }
@@ -3881,7 +3938,7 @@
           if (!state.sessions[state.cicleActiu][edicio.id]) state.sessions[state.cicleActiu][edicio.id] = [];
           state.sessions[state.cicleActiu][edicio.id].push(ns);
           desarSessions(state.cicleActiu, edicio.id);
-          novaSessioForm = { nom: "", dia: "", horaInici: "", tipus: TIPUS_SESSIO[0], lloc: "cercle", tarifaId: "" };
+          novaSessioForm = { nom: "", dia: "", horaInici: "", tipus: TIPUS_SESSIO[0], lloc: "cercle", tarifaId: "", horaFixada: false };
           render();
         });
 
@@ -3893,6 +3950,7 @@
         var aLl = document.getElementById("a-lloc");
         var aDe2 = document.getElementById("a-descripcio");
         var aCo2 = document.getElementById("a-contacte");
+        var aFix2 = document.getElementById("a-fixada");
         if (aTit) aTit.addEventListener("input", function () { novaActivitatForm.titol = aTit.value; });
         if (aDi) aDi.addEventListener("input", function () { novaActivitatForm.dia = aDi.value; });
         if (aHo) aHo.addEventListener("input", function () { novaActivitatForm.horaInici = aHo.value; });
@@ -3903,6 +3961,11 @@
         if (aTarifa) aTarifa.addEventListener("change", function () { novaActivitatForm.tarifaId = aTarifa.value; });
         if (aDe2) aDe2.addEventListener("input", function () { novaActivitatForm.descripcio = aDe2.value; });
         if (aCo2) aCo2.addEventListener("input", function () { novaActivitatForm.contacte = aCo2.value; });
+        if (aFix2) aFix2.addEventListener("change", function () {
+          novaActivitatForm.horaFixada = aFix2.checked;
+          var lbl = aFix2.parentElement;
+          if (lbl) lbl.className = "csx-fix-check" + (aFix2.checked ? " sel" : "");
+        });
         main.querySelectorAll("[data-camp-nom]").forEach(function (inp) {
           inp.addEventListener("input", function () { novaActivitatForm.camps[parseInt(inp.getAttribute("data-camp-nom"), 10)].nom = inp.value; });
         });
@@ -3922,13 +3985,14 @@
             titol: novaActivitatForm.titol, dia: novaActivitatForm.dia, horaInici: novaActivitatForm.horaInici,
             durHores: novaActivitatForm.durHores, durMinuts: novaActivitatForm.durMinuts,
             descripcio: novaActivitatForm.descripcio, contacte: novaActivitatForm.contacte,
-            lloc: novaActivitatForm.lloc, tarifaId: novaActivitatForm.tarifaId || "", camps: novaActivitatForm.camps.slice()
+            lloc: novaActivitatForm.lloc, tarifaId: novaActivitatForm.tarifaId || "", camps: novaActivitatForm.camps.slice(),
+            horaFixada: !!novaActivitatForm.horaFixada
           };
           if (na.lloc === "cercle" && hiHaConflicteCercle(na, activitatsEd.concat(sessionsEd), null)) { window.alert("Solapa amb una altra d'El Circol."); return; }
           if (!state.activitats[edicio.id]) state.activitats[edicio.id] = [];
           state.activitats[edicio.id].push(na);
           desarActivitats(edicio.id);
-          novaActivitatForm = { titol: "", dia: "", horaInici: "", durHores: "", durMinuts: "", descripcio: "", contacte: "", lloc: "cercle", tarifaId: "", camps: [] };
+          novaActivitatForm = { titol: "", dia: "", horaInici: "", durHores: "", durMinuts: "", descripcio: "", contacte: "", lloc: "cercle", tarifaId: "", camps: [], horaFixada: false };
           render();
         });
 
@@ -3938,12 +4002,18 @@
         var jLloc2 = document.getElementById("j-lloc");
         var jTarifa2 = document.getElementById("j-tarifa");
         var jDesc2 = document.getElementById("j-descripcio");
+        var jFix2 = document.getElementById("j-fixada");
         if (jNom2) jNom2.addEventListener("input", function () { state.juvenilForm.nom = jNom2.value; });
         if (jDia2) jDia2.addEventListener("input", function () { state.juvenilForm.dia = jDia2.value; });
         if (jHora2) jHora2.addEventListener("input", function () { state.juvenilForm.horaInici = jHora2.value; });
         if (jLloc2) jLloc2.addEventListener("change", function () { state.juvenilForm.lloc = jLloc2.value; });
         if (jTarifa2) jTarifa2.addEventListener("change", function () { state.juvenilForm.tarifaId = jTarifa2.value; });
         if (jDesc2) jDesc2.addEventListener("input", function () { state.juvenilForm.descripcio = jDesc2.value; });
+        if (jFix2) jFix2.addEventListener("change", function () {
+          state.juvenilForm.horaFixada = jFix2.checked;
+          var lbl = jFix2.parentElement;
+          if (lbl) lbl.className = "csx-fix-check" + (jFix2.checked ? " sel" : "");
+        });
         var elJCrear = document.getElementById("j-crear");
         if (elJCrear) elJCrear.addEventListener("click", function () {
           var f = state.juvenilForm || {};
@@ -3953,7 +4023,8 @@
             dia: f.dia, horaInici: f.horaInici,
             tipus: "Sessió Juvenil",
             curts: [], tarifaId: f.tarifaId || "",
-            descripcio: f.descripcio || ""
+            descripcio: f.descripcio || "",
+            horaFixada: !!f.horaFixada
           };
           if (esFestival(state.cicleActiu)) {
             ns.lloc = f.lloc || "cercle";
@@ -3962,14 +4033,16 @@
           if (!state.sessions[state.cicleActiu][edicio.id]) state.sessions[state.cicleActiu][edicio.id] = [];
           state.sessions[state.cicleActiu][edicio.id].push(ns);
           desarSessions(state.cicleActiu, edicio.id);
-          state.juvenilForm = { nom: "", dia: "", horaInici: "", lloc: "cercle", tarifaId: "", descripcio: "" };
+          state.juvenilForm = { nom: "", dia: "", horaInici: "", lloc: "cercle", tarifaId: "", descripcio: "", horaFixada: false };
           render();
         });
         var elJCancel = document.getElementById("j-cancelar");
-        if (elJCancel) elJCancel.addEventListener("click", function () { state.juvenilForm = { nom: "", dia: "", horaInici: "", lloc: "cercle", tarifaId: "", descripcio: "" }; render(); });
+        if (elJCancel) elJCancel.addEventListener("click", function () { state.juvenilForm = { nom: "", dia: "", horaInici: "", lloc: "cercle", tarifaId: "", descripcio: "", horaFixada: false }; render(); });
       } else {
+        // VISTA OFICIAL — llista única per dia + drag&drop + eliminar
         main.querySelectorAll("[data-obrir-sessio]").forEach(function (row) {
-          row.addEventListener("click", function () {
+          row.addEventListener("click", function (e) {
+            if (e.target.closest && e.target.closest("[data-del-item]")) return;
             if (row.getAttribute("data-drag-en-curs") === "1") return;
             state.sessioOberta = row.getAttribute("data-obrir-sessio");
             state.activitatOberta = null; state.descansOberta = null; state.juvenilOberta = null;
@@ -3977,7 +4050,8 @@
           });
         });
         main.querySelectorAll("[data-obrir-juvenil]").forEach(function (row) {
-          row.addEventListener("click", function () {
+          row.addEventListener("click", function (e) {
+            if (e.target.closest && e.target.closest("[data-del-item]")) return;
             if (row.getAttribute("data-drag-en-curs") === "1") return;
             state.juvenilOberta = row.getAttribute("data-obrir-juvenil");
             state.sessioOberta = null; state.activitatOberta = null; state.descansOberta = null;
@@ -3985,7 +4059,8 @@
           });
         });
         main.querySelectorAll("[data-obrir-activitat]").forEach(function (row) {
-          row.addEventListener("click", function () {
+          row.addEventListener("click", function (e) {
+            if (e.target.closest && e.target.closest("[data-del-item]")) return;
             if (row.getAttribute("data-drag-en-curs") === "1") return;
             state.activitatOberta = row.getAttribute("data-obrir-activitat");
             state.sessioOberta = null; state.descansOberta = null; state.juvenilOberta = null;
@@ -3993,7 +4068,8 @@
           });
         });
         main.querySelectorAll("[data-obrir-descans]").forEach(function (row) {
-          row.addEventListener("click", function () {
+          row.addEventListener("click", function (e) {
+            if (e.target.closest && e.target.closest("[data-del-item]")) return;
             if (row.getAttribute("data-drag-en-curs") === "1") return;
             state.descansOberta = row.getAttribute("data-obrir-descans");
             state.sessioOberta = null; state.activitatOberta = null; state.juvenilOberta = null;
@@ -4001,11 +4077,22 @@
           });
         });
 
-        var draggedItemId = null, draggedTipus = null;
+        // Botó eliminar
+        main.querySelectorAll("[data-del-item]").forEach(function (btn) {
+          btn.addEventListener("click", function (e) {
+            e.stopPropagation();
+            var id = btn.getAttribute("data-del-item");
+            eliminarItemPerId(id, edicio.id);
+          });
+        });
+
+        // Drag & drop lliure per dia
+        var draggedItemId = null;
+        var draggedItemDia = null;
         main.querySelectorAll("[data-drag-item]").forEach(function (row) {
           row.addEventListener("dragstart", function (e) {
             draggedItemId = row.getAttribute("data-drag-item");
-            draggedTipus = row.getAttribute("data-tipus-item");
+            draggedItemDia = row.parentElement.getAttribute("data-llista-dia");
             row.setAttribute("data-drag-en-curs", "1");
             row.classList.add("csx-dragging");
             if (e.dataTransfer) { e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", draggedItemId); }
@@ -4018,117 +4105,56 @@
           row.addEventListener("drop", function (e) {
             e.preventDefault();
             var tid = row.getAttribute("data-drag-item");
-            var ttipus = row.getAttribute("data-tipus-item");
             if (!draggedItemId || draggedItemId === tid) return;
 
-            var allItems = sessionsEd.concat(activitatsEd);
-            var moved = allItems.filter(function (x) { return x.id === draggedItemId; })[0];
-            var desti = allItems.filter(function (x) { return x.id === tid; })[0];
-            if (!moved || !desti) return;
-
-            if (draggedTipus === "descans" && ttipus === "descans") {
-              var descs = activitatsEd.filter(function (x) { return esDescans(x); });
-              var fd = -1, td = -1;
-              for (var d1 = 0; d1 < descs.length; d1++) {
-                if (descs[d1].id === draggedItemId) fd = d1;
-                if (descs[d1].id === tid) td = d1;
-              }
-              if (fd < 0 || td < 0) return;
-              var md = descs.splice(fd, 1)[0];
-              descs.splice(td, 0, md);
-              descs.forEach(function (x, idx) { x.ordre = idx; });
-              state.activitats[edicio.id] = activitatsEd;
-              desarActivitats(edicio.id);
-              render();
-              return;
-            }
-
-            if (draggedTipus === "descans") {
-              var destiDia = desti.dia || "";
-              var destiLloc = desti.lloc || "cercle";
-              moved.dia = destiDia;
-              moved.lloc = destiLloc;
-              var diaItems = [];
-              if (ttipus === "sessio") {
-                diaItems = sessionsEd.filter(function (x) { return (x.dia || "") === destiDia && (x.lloc || "cercle") === destiLloc; });
-              } else {
-                diaItems = activitatsEd.filter(function (x) { return (x.dia || "") === destiDia && (x.lloc || "cercle") === destiLloc && !esDescans(x); });
-              }
-              diaItems.sort(function (a, b) { return (a.horaInici || "").localeCompare(b.horaInici || ""); });
-              var idxDesti = -1;
-              for (var ii = 0; ii < diaItems.length; ii++) { if (diaItems[ii].id === desti.id) { idxDesti = ii; break; } }
-              if (idxDesti < 0) return;
-              moved.horaInici = diaItems[idxDesti].horaInici;
-              var durDesc = durMinItem(moved);
-              for (var jj = idxDesti; jj < diaItems.length; jj++) {
-                diaItems[jj].horaInici = minutsAHora(horaAMinuts(diaItems[jj].horaInici) + durDesc);
-              }
-              state.activitats[edicio.id] = activitatsEd;
-              desarActivitats(edicio.id);
-              if (ttipus === "sessio") desarSessions(state.cicleActiu, edicio.id);
-              render();
-              return;
-            }
-
-            if (draggedTipus !== ttipus) return;
-
-            if ((moved.dia || "") !== (desti.dia || "")) {
+            var destiDia = row.parentElement.getAttribute("data-llista-dia");
+            if (destiDia !== draggedItemDia) {
               window.alert("No es pot canviar de dia arrossegant.\n\nPer canviar el dia, obre la fitxa de la sessió/activitat i canvia'l allà.");
               render();
               return;
             }
 
-            var itemsDia = [];
-            if (draggedTipus === "sessio") itemsDia = sessionsEd.filter(function (x) { return (x.dia || "") === (moved.dia || ""); });
-            else itemsDia = activitatsEd.filter(function (x) { return (x.dia || "") === (moved.dia || "") && x.tipusEntitat === draggedTipus; });
-
-            itemsDia.sort(function (a, b) {
-              var oa = (typeof a.ordre === "number") ? a.ordre : 9999;
-              var ob = (typeof b.ordre === "number") ? b.ordre : 9999;
-              if (oa !== ob) return oa - ob;
+            // Agafem tots els items del dia
+            var totsDia = sessionsEd.concat(activitatsEd).filter(function (x) {
+              return (x.dia || "") === draggedItemDia;
+            });
+            // Ordenem per hora actual
+            totsDia.sort(function (a, b) {
               return (a.horaInici || "").localeCompare(b.horaInici || "");
             });
 
-            var fromIdx = -1, toIdx = -1;
-            for (var i = 0; i < itemsDia.length; i++) {
-              if (itemsDia[i].id === draggedItemId) fromIdx = i;
-              if (itemsDia[i].id === tid) toIdx = i;
+            // Construïm l'ordre actual d'IDs
+            var ordreActual = totsDia.map(function (x) { return x.id; });
+
+            // Eliminem l'item arrossegat i l'afegim davant del destí
+            var idxOrigen = ordreActual.indexOf(draggedItemId);
+            var idxDesti = ordreActual.indexOf(tid);
+            if (idxOrigen < 0 || idxDesti < 0) return;
+            ordreActual.splice(idxOrigen, 1);
+            // Recalculem l'índex del destí després de treure
+            var newIdx = ordreActual.indexOf(tid);
+            ordreActual.splice(newIdx, 0, draggedItemId);
+
+            // Cridem al recàlcul
+            var res = recalcularHoresDia(totsDia, ordreActual);
+            if (!res.ok) {
+              window.alert(res.missatge);
+              render();
+              return;
             }
-            if (fromIdx < 0 || toIdx < 0) return;
 
-            var el = itemsDia.splice(fromIdx, 1)[0];
-            itemsDia.splice(toIdx, 0, el);
-
-            var minInici = null;
-            itemsDia.forEach(function (x) {
-              var h = horaAMinuts(x.horaInici || "00:00");
-              if (minInici === null || h < minInici) minInici = h;
-            });
-            var cursor = minInici !== null ? minInici : horaAMinuts(itemsDia[0].horaInici || "00:00");
-
-            itemsDia.forEach(function (it, idx) {
-              it.ordre = idx;
-              it.horaInici = minutsAHora(cursor);
-              cursor += durMinItem(it);
+            // Apliquem les noves hores
+            totsDia.forEach(function (it) {
+              if (res.resultat[it.id] !== undefined) {
+                it.horaInici = res.resultat[it.id];
+              }
             });
 
-            if (draggedTipus === "sessio") {
-              itemsDia.forEach(function (it) {
-                for (var k = 0; k < sessionsEd.length; k++) {
-                  if (sessionsEd[k].id === it.id) { sessionsEd[k] = it; break; }
-                }
-              });
-              state.sessions[state.cicleActiu][edicio.id] = sessionsEd;
-              desarSessions(state.cicleActiu, edicio.id);
-            } else {
-              itemsDia.forEach(function (it) {
-                for (var k = 0; k < activitatsEd.length; k++) {
-                  if (activitatsEd[k].id === it.id) { activitatsEd[k] = it; break; }
-                }
-              });
-              state.activitats[edicio.id] = activitatsEd;
-              desarActivitats(edicio.id);
-            }
+            // Desem sessions i activitats
+            state.sessions[state.cicleActiu][edicio.id] = sessionsEd;
+            state.activitats[edicio.id] = activitatsEd;
+            desarSessions(state.cicleActiu, edicio.id);
+            desarActivitats(edicio.id);
             render();
           });
         });
@@ -4434,6 +4460,32 @@
           desarTasques(); render();
         });
       });
+    }
+  }
+
+  function eliminarItemPerId(id, edicioId) {
+    // Mirem si és a sessions
+    var sessionsEd = sessionsPerCicle(state.cicleActiu, edicioId);
+    var idxS = sessionsEd.findIndex ? sessionsEd.findIndex(function (s) { return s.id === id; }) : -1;
+    if (idxS < 0) {
+      for (var i = 0; i < sessionsEd.length; i++) { if (sessionsEd[i].id === id) { idxS = i; break; } }
+    }
+    if (idxS >= 0) {
+      if (!window.confirm("Eliminar aquesta sessió?")) return;
+      state.sessions[state.cicleActiu][edicioId] = sessionsEd.filter(function (s) { return s.id !== id; });
+      desarSessions(state.cicleActiu, edicioId); render();
+      return;
+    }
+    // Mirem si és a activitats
+    var activitatsEd = activitatsEdicio(edicioId);
+    var idxA = -1;
+    for (var j = 0; j < activitatsEd.length; j++) { if (activitatsEd[j].id === id) { idxA = j; break; } }
+    if (idxA >= 0) {
+      if (!window.alert) {}
+      if (!window.confirm("Eliminar aquest element?")) return;
+      state.activitats[edicioId] = activitatsEd.filter(function (a) { return a.id !== id; });
+      desarActivitats(edicioId); render();
+      return;
     }
   }
 
