@@ -3045,7 +3045,7 @@
     return html;
   }
 
-  function renderLiterariBlocHtml(acte) {
+      function renderLiterariBlocHtml(acte) {
     var items = (acte.items || []).slice().sort(function (a, b) {
       return (a.horaInici || "99:99").localeCompare(b.horaInici || "99:99");
     });
@@ -3059,9 +3059,11 @@
         '</div>' +
         '</div>';
     }).join("");
+    var dataTxt = acte.dia ? dataLlarga(acte.dia) : "";
     return '<div class="csx-bloc-sala-header" style="color:var(--accent-lit);border-bottom-color:var(--accent-lit);">' +
       '📖 ' + escapeHtml(acte.nom || "Cryptshow Literari") +
       (acte.numEdicio ? ' · ' + escapeHtml(acte.numEdicio) : '') +
+      (dataTxt ? ' · ' + escapeHtml(dataTxt) : '') +
       (acte.lloc ? ' · ' + escapeHtml(acte.lloc) : '') +
       '</div>' +
       '<div class="csx-session-list" style="margin-bottom:14px;">' + files + '</div>';
@@ -4720,18 +4722,21 @@
         });
       });
 
-      main.querySelectorAll("#prog-obrir-literari").forEach(function (btn) {
-        btn.addEventListener("click", function (e) {
+      main.addEventListener("click", function (e) {
+        var t = e.target;
+        if (t && t.id === "prog-obrir-literari") {
           e.preventDefault();
           e.stopPropagation();
+          var edId = state.programacioEdicio;
           state.tab = "literari";
-          state.literariEdicio = state.programacioEdicio;
-          var acte = literariPerEdicio(state.literariEdicio);
+          state.literariEdicio = edId;
+          var acte = literariPerEdicio(edId);
           state.literariActeObert = acte ? acte._actId : null;
           state.literariItemForm = null;
           state.literariEditarActe = false;
+          state.literariNouActeForm = null;
           render();
-        });
+        }
       });
 
       var selO = document.getElementById("prog-edicio");
