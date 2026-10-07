@@ -23,6 +23,7 @@
     --accent-tac: #4a7a8c;
     --accent-fix: #b89b5e;
     --accent-warn: #c96a3c;
+    --accent-lit: #b07a4a;
   }
   * { box-sizing: border-box; }
   html, body {
@@ -152,6 +153,10 @@
     background: var(--accent-juv); color: var(--text);
   }
   .csx-btn-juv:hover { background: #8f6fa0; }
+  .csx-btn-lit {
+    background: var(--accent-lit); color: var(--text);
+  }
+  .csx-btn-lit:hover { background: #c68a58; }
   .csx-link-btn {
     background: none; border: none; color: var(--text-dim);
     font-size: 12px; cursor: pointer; font-family: inherit;
@@ -266,6 +271,10 @@
     background: rgba(122,94,138,0.12);
     border-left: 3px solid var(--accent-juv);
   }
+  .csx-session-row.csx-lit {
+    background: rgba(176,122,74,0.10);
+    border-left: 3px solid var(--accent-lit);
+  }
   .csx-session-row.csx-warn {
     border-left: 3px solid var(--accent-warn);
     background: rgba(201,106,60,0.08);
@@ -294,6 +303,10 @@
   .csx-session-tipus.juv {
     color: var(--accent-juv);
     border-color: var(--accent-juv);
+  }
+  .csx-session-tipus.lit {
+    color: var(--accent-lit);
+    border-color: var(--accent-lit);
   }
   .csx-session-count { color: var(--text-dim); font-size: 12px; flex-shrink: 0; }
   .csx-session-del {
@@ -452,6 +465,14 @@
     border: 1px solid var(--border);
     border-left: 3px solid var(--accent-juv);
     padding: 14px 16px;
+    margin-bottom: 18px;
+  }
+
+  .csx-literari-form {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent-lit);
+    padding: 16px 18px;
     margin-bottom: 18px;
   }
 
@@ -694,6 +715,161 @@
   }
   .csx-creds-box strong:first-child { margin-top: 0; }
 
+  /* Literari: targetes d'item i llistes de textos */
+  .csx-lit-item {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent-lit);
+    padding: 14px 16px;
+    margin-bottom: 8px;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    cursor: grab;
+  }
+  .csx-lit-item.csx-dragging { opacity: 0.4; }
+  .csx-lit-item-main { flex: 1; min-width: 0; }
+  .csx-lit-item-head {
+    display: flex; gap: 12px; align-items: baseline;
+    flex-wrap: wrap; margin-bottom: 6px;
+  }
+  .csx-lit-item-hora {
+    font-family: 'Fraunces', serif; font-weight: 600;
+    color: var(--accent-amber); font-size: 15px;
+  }
+  .csx-lit-item-titol {
+    font-weight: 500; color: var(--text); font-size: 14px;
+  }
+  .csx-lit-item-tipus {
+    font-size: 11px; color: var(--accent-lit);
+    border: 1px solid var(--accent-lit);
+    padding: 1px 8px; border-radius: 10px;
+  }
+  .csx-lit-item-meta {
+    font-size: 12px; color: var(--text-dim);
+    line-height: 1.5; margin-top: 4px;
+  }
+  .csx-lit-item-desc {
+    font-size: 12px; color: var(--text-dim);
+    font-style: italic; line-height: 1.5; margin-top: 6px;
+  }
+  .csx-lit-item-accions {
+    display: flex; flex-direction: column; gap: 4px;
+    flex-shrink: 0;
+  }
+  .csx-lit-item-accions button {
+    background: var(--panel-2); border: 1px solid var(--border);
+    color: var(--text-dim); cursor: pointer;
+    font-family: inherit; font-size: 12px;
+    padding: 3px 8px; border-radius: 2px;
+  }
+  .csx-lit-item-accions button:hover {
+    border-color: var(--accent-amber); color: var(--accent-amber);
+  }
+  .csx-lit-item-accions button.del:hover {
+    border-color: var(--accent-wine); color: var(--accent-wine);
+  }
+  .csx-lit-tags {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    margin: 4px 0 8px;
+  }
+  .csx-lit-tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--panel-2); border: 1px solid var(--border);
+    color: var(--text); font-size: 12px;
+    padding: 3px 8px; border-radius: 10px;
+  }
+  .csx-lit-tag button {
+    background: none; border: none; color: var(--text-dim);
+    cursor: pointer; font-size: 12px; padding: 0;
+    font-family: inherit;
+  }
+  .csx-lit-tag button:hover { color: var(--accent-wine); }
+  .csx-lit-add-row {
+    display: flex; gap: 6px; align-items: center;
+  }
+  .csx-lit-add-row input {
+    background: var(--panel-2); border: 1px solid var(--border);
+    color: var(--text); padding: 6px 8px;
+    font-family: inherit; font-size: 12px; border-radius: 2px;
+    flex: 1; min-width: 120px;
+  }
+  .csx-lit-acte-header {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent-lit);
+    padding: 18px 20px;
+    margin-bottom: 20px;
+  }
+  .csx-lit-acte-header h3 {
+    font-family: 'Fraunces', serif;
+    font-size: 20px; margin: 0 0 4px 0;
+    color: var(--text);
+  }
+  .csx-lit-acte-header .meta {
+    font-size: 12px; color: var(--text-dim);
+    line-height: 1.6;
+  }
+  .csx-lit-acte-header .meta strong {
+    color: var(--text); font-weight: 500;
+  }
+  .csx-filtres-bloc {
+    border-top: 1px dashed var(--border);
+    margin-top: 14px;
+    padding-top: 14px;
+    margin-bottom: 14px;
+  }
+  .csx-filtres-titol {
+    font-size: 11px; letter-spacing: 0.05em;
+    color: var(--accent-amber);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .csx-filtre-fila {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 10px; flex-wrap: wrap;
+  }
+  .csx-filtre-label {
+    font-size: 12px; color: var(--text-dim);
+    width: 80px; flex-shrink: 0;
+  }
+  .csx-filtre-check {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 13px; color: var(--text-dim);
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    padding: 6px 10px; border-radius: 2px;
+    cursor: pointer;
+  }
+  .csx-filtre-check input { cursor: pointer; }
+  .csx-filtre-check.tac input { accent-color: var(--accent-tac); }
+  .csx-filtre-check.juv input { accent-color: var(--accent-juv); }
+  .csx-filtre-check.sel { color: var(--text); }
+  .csx-filtre-check.tac.sel { border-color: var(--accent-tac); }
+  .csx-filtre-check.juv.sel { border-color: var(--accent-juv); }
+  .csx-filtre-radio {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 13px; color: var(--text-dim);
+    cursor: pointer;
+  }
+  .csx-filtre-radio input { accent-color: var(--accent-wine); cursor: pointer; }
+  .csx-filtre-radio.sel { color: var(--text); }
+  .csx-filtre-resum {
+    font-size: 13px;
+    color: var(--text);
+    background: rgba(140,48,56,0.10);
+    border-left: 3px solid var(--accent-wine);
+    padding: 8px 12px;
+    margin-top: 12px;
+    margin-bottom: 14px;
+  }
+  .csx-filtre-resum strong {
+    color: var(--accent-amber);
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 15px;
+  }
+
   @media (max-width: 640px) {
     .csx-root { flex-direction: column; }
     .csx-sidebar { width: 100%; flex-direction: row; align-items: center; gap: 16px; padding: 16px 20px; flex-wrap: wrap; }
@@ -784,6 +960,7 @@
     { id: "resum", label: "Resum", rols: [] },
     { id: "edicions", label: "Edicions", rols: ["programacio"] },
     { id: "programacio", label: "Programació", rols: ["programacio"] },
+    { id: "literari", label: "Literari", rols: ["literari"] },
     { id: "curts", label: "Curts/Llargs", rols: ["curts"] },
     { id: "subtitols", label: "Subtítols", rols: ["subtitols"] },
     { id: "premsa", label: "Premsa", rols: ["premsa"] },
@@ -793,6 +970,7 @@
 
   var ROLS_DISPONIBLES = [
     { id: "programacio", label: "Programació" },
+    { id: "literari", label: "Literari" },
     { id: "curts", label: "Curts/Llargs" },
     { id: "subtitols", label: "Subtítols" },
     { id: "premsa", label: "Premsa" },
@@ -800,6 +978,7 @@
   ];
 
   var TIPUS_SESSIO = ["Curts", "Llargs", "Altres"];
+  var TIPUS_LITERARI = ["Xerrada", "Entrega de premi", "Altres"];
   var ANY_ACTUAL = new Date().getFullYear();
 
   var LLOCS_ACTIVITAT_FIXOS = [
@@ -1074,6 +1253,10 @@
     premsaEdicio: null,
     premsaExportObert: false,
     premsaCampsSeleccionats: null,
+    premsaFiltreTAC: false,
+    premsaFiltreJuvenil: false,
+    premsaFiltrePais: "",
+    premsaFiltreSeccio: "totes",
     subtitolsEdicio: null,
     tasquesVista: "tasques",
     tarifesEdicio: null,
@@ -1097,6 +1280,13 @@
     subtitolsMetaCarregat: false,
     tarifes: {},
     tarifesCarregat: false,
+    literari: {},
+    literariCarregat: false,
+    literariEdicio: null,
+    literariActeObert: null,
+    literariNouActeForm: null,
+    literariItemForm: null,
+    literariCampsForm: { moderadors: "", colaboradors: "" },
     errorCarrega: null,
     usuari: null,
     usuariRols: null,
@@ -1132,11 +1322,57 @@
   function tarifesEdicio(edId) { return state.tarifes[edId] || []; }
   function esSessioJuvenil(s) { return !!(s && s.tipus === "Sessió Juvenil"); }
 
+  // ---- LITERARI ----
+  function literariPerEdicio(edId) {
+    var ed = state.literari[edId] || {};
+    var keys = Object.keys(ed);
+    if (keys.length === 0) return null;
+    var acte = ed[keys[0]];
+    if (!acte) return null;
+    if (!acte.items) acte.items = [];
+    else if (!Array.isArray(acte.items)) acte.items = Object.keys(acte.items).map(function (k) { return acte.items[k]; });
+    acte.items = acte.items.map(function (it) {
+      if (!it) return it;
+      if (typeof it.ordre !== "number") it.ordre = 9999;
+      if (typeof it.horaFixada !== "boolean") it.horaFixada = false;
+      if (!it.convidats) it.convidats = [];
+      if (typeof it.convidats === "object" && !Array.isArray(it.convidats)) {
+        it.convidats = Object.keys(it.convidats).map(function (k) { return it.convidats[k]; });
+      }
+      if (it.durMin !== undefined && it.durMin !== null && it.durMin !== "") {
+        var n = parseInt(it.durMin, 10);
+        it.durMin = isNaN(n) ? null : n;
+      } else {
+        it.durMin = null;
+      }
+      return it;
+    });
+    acte.items.sort(function (a, b) {
+      var ha = (a.horaInici || "99:99");
+      var hb = (b.horaInici || "99:99");
+      if (ha !== hb) return ha.localeCompare(hb);
+      var oa = (typeof a.ordre === "number") ? a.ordre : 9999;
+      var ob = (typeof b.ordre === "number") ? b.ordre : 9999;
+      return oa - ob;
+    });
+    if (!acte.moderadors) acte.moderadors = [];
+    if (typeof acte.moderadors === "object" && !Array.isArray(acte.moderadors)) {
+      acte.moderadors = Object.keys(acte.moderadors).map(function (k) { return acte.moderadors[k]; });
+    }
+    if (!acte.colaboradors) acte.colaboradors = [];
+    if (typeof acte.colaboradors === "object" && !Array.isArray(acte.colaboradors)) {
+      acte.colaboradors = Object.keys(acte.colaboradors).map(function (k) { return acte.colaboradors[k]; });
+    }
+    acte._actId = keys[0];
+    return acte;
+  }
+
   function totCarregat() {
     if (!state.tasquesCarregats || !state.cicleLabelsCarregats) return false;
     if (!state.llocAltresNomCarregat || !state.llocAltresActivitatsNomCarregat) return false;
     if (!state.curtsCarregat || !state.activitatsCarregat) return false;
     if (!state.subtitolsMetaCarregat || !state.tarifesCarregat) return false;
+    if (!state.literariCarregat) return false;
     for (var i = 0; i < CICLES.length; i++) {
       var id = CICLES[i].id;
       if (!state.edicionsCarregats[id] || !state.sessionsCarregats[id]) return false;
@@ -1349,6 +1585,14 @@
       state.tarifesCarregat = true;
       render();
     }, function (err) { errorFirebase("Error preus", err); });
+
+    db.ref("cryptshow/literari").on("value", function (snap) {
+      try {
+        state.literari = snap.val() || {};
+      } catch (e) { state.literari = {}; }
+      state.literariCarregat = true;
+      render();
+    }, function (err) { errorFirebase("Error literari", err); });
 
     db.ref("cryptshow/usuaris").on("value", function (snap) {
       state.usuaris = snap.val() || {};
@@ -1611,10 +1855,31 @@
     desarTarifes(edId);
   }
 
+  // ---- LITERARI desar (update per registre) ----
+  function desarLiterariActe(edicioId, actId, canvis) {
+    db.ref("cryptshow/literari/" + edicioId + "/" + actId).update(canvis);
+  }
+  function crearLiterariItem(edicioId, actId, item) {
+    db.ref("cryptshow/literari/" + edicioId + "/" + actId + "/items/" + item.id).set(item);
+  }
+  function desarLiterariItem(edicioId, actId, itemId, canvis) {
+    db.ref("cryptshow/literari/" + edicioId + "/" + actId + "/items/" + itemId).update(canvis);
+  }
+  function eliminarLiterariItem(edicioId, actId, itemId) {
+    db.ref("cryptshow/literari/" + edicioId + "/" + actId + "/items/" + itemId).remove();
+  }
+  function eliminarLiterariActe(edicioId, actId) {
+    db.ref("cryptshow/literari/" + edicioId + "/" + actId).remove();
+  }
+
+  // ---- escapeHtml blindat ----
   function escapeHtml(str) {
-    var div = document.createElement("div");
-    div.textContent = str == null ? "" : String(str);
-    return div.innerHTML;
+    return (str == null ? "" : String(str))
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
   }
   function horaAMinuts(h) {
     var p = (h || "").split(":");
@@ -1686,7 +1951,75 @@
     return false;
   }
 
-  // ---- REORDENACIÓ per dia ----
+  // ---- LITERARI: càlcul de solapament i durada estimada ----
+  function literariSeSolapen(a, b) {
+    if (!a || !b) return false;
+    var ai = horaAMinuts(a.horaInici || "00:00");
+    var af = ai + (parseInt(a.durMin, 10) || 0);
+    var bi = horaAMinuts(b.horaInici || "00:00");
+    return ai < bi && af > bi;
+  }
+
+  function literariItemsAmbAvis(items) {
+    // Retorna una còpia amb { _avis: bool } segons solapament amb el següent
+    var copia = items.map(function (it) {
+      return {
+        it: it,
+        avis: false
+      };
+    });
+    for (var i = 0; i < copia.length - 1; i++) {
+      var actual = copia[i].it;
+      var seguent = copia[i + 1].it;
+      if (!actual.durMin) continue;
+      if (literariSeSolapen(actual, seguent)) copia[i].avis = true;
+    }
+    return copia;
+  }
+
+  // ---- LITERARI: recalcul d'hores en reordenar ----
+  function recalcularHoresItems(items, ordreNou) {
+    var mapItems = {};
+    items.forEach(function (it) { mapItems[it.id] = it; });
+    var ordenats = [];
+    ordreNou.forEach(function (id) { if (mapItems[id]) ordenats.push(mapItems[id]); });
+    var ambHora = ordenats.filter(function (it) { return it.horaInici; });
+    if (ambHora.length === 0) return { ok: true, resultat: {} };
+
+    var hiHaFlexible = ambHora.some(function (it) { return !it.horaFixada; });
+    if (!hiHaFlexible) {
+      var resultat = {};
+      ambHora.forEach(function (it) { resultat[it.id] = it.horaInici; });
+      return { ok: true, resultat: resultat };
+    }
+    var horaBase = null;
+    ambHora.forEach(function (it) {
+      if (!it.horaFixada) {
+        var h = horaAMinuts(it.horaInici || "00:00");
+        if (horaBase === null || h < horaBase) horaBase = h;
+      }
+    });
+    var cursor = horaBase;
+    var resultat = {};
+    for (var i = 0; i < ambHora.length; i++) {
+      var it = ambHora[i];
+      if (it.horaFixada) {
+        var hFix = horaAMinuts(it.horaInici || "00:00");
+        if (cursor > hFix) {
+          return {
+            ok: false,
+            missatge: "No es pot reordenar.\n\n\"" + (it.titol || "(sense títol)") + "\" està fixada a les " + (it.horaInici || "??") + ",\nperò amb el nou ordre no hi ha prou espai abans.\n\nSolucions:\n· Treure la fixació d'aquesta intervenció\n· Canviar la seva hora manualment\n· Reordenar-ho d'una altra manera"
+          };
+        }
+        resultat[it.id] = it.horaInici;
+        cursor = hFix + (parseInt(it.durMin, 10) || 0);
+      } else {
+        resultat[it.id] = minutsAHora(cursor);
+        cursor += (parseInt(it.durMin, 10) || 0);
+      }
+    }
+    return { ok: true, resultat: resultat };
+  }
   function recalcularHoresDia(itemsDia, ordreNou) {
     var mapItems = {};
     itemsDia.forEach(function (it) { mapItems[it.id] = it; });
@@ -1694,7 +2027,51 @@
     ordreNou.forEach(function (id) {
       if (mapItems[id]) ordenats.push(mapItems[id]);
     });
-    // Filtrem només els que tenen hora
+    var ambHora = ordenats.filter(function (it) { return it.horaInici; });
+    if (ambHora.length === 0) return { ok: true, resultat: {} };
+
+    var hiHaFlexible = ambHora.some(function (it) { return !it.horaFixada; });
+    if (!hiHaFlexible) {
+      var resultat = {};
+      ambHora.forEach(function (it) { resultat[it.id] = it.horaInici; });
+      return { ok: true, resultat: resultat };
+    }
+    var horaBase = null;
+    ambHora.forEach(function (it) {
+      if (!it.horaFixada) {
+        var h = horaAMinuts(it.horaInici || "00:00");
+        if (horaBase === null || h < horaBase) horaBase = h;
+      }
+    });
+    var cursor = horaBase;
+    var resultat = {};
+    for (var i = 0; i < ambHora.length; i++) {
+      var it = ambHora[i];
+      if (it.horaFixada) {
+        var hFix = horaAMinuts(it.horaInici || "00:00");
+        if (cursor > hFix) {
+          var nomIt = esActivitat(it) ? (it.titol || "(sense títol)") : (it.nom || "(sense nom)");
+          return {
+            ok: false,
+            missatge: "No es pot reordenar.\n\n\"" + nomIt + "\" (" + llocLabel(it.lloc || "cercle") + ") està fixada a les " + (it.horaInici || "??") + ",\nperò amb el nou ordre no hi ha prou espai abans.\n\nSolucions:\n· Treure la fixació d'aquesta sessió/activitat\n· Canviar la seva hora manualment\n· Reordenar-ho d'una altra manera"
+          };
+        }
+        resultat[it.id] = it.horaInici;
+        cursor = hFix + durMinItem(it);
+      } else {
+        resultat[it.id] = minutsAHora(cursor);
+        cursor += durMinItem(it);
+      }
+    }
+    return { ok: true, resultat: resultat };
+  }
+  function recalcularHoresDia(itemsDia, ordreNou) {
+    var mapItems = {};
+    itemsDia.forEach(function (it) { mapItems[it.id] = it; });
+    var ordenats = [];
+    ordreNou.forEach(function (id) {
+      if (mapItems[id]) ordenats.push(mapItems[id]);
+    });
     var ambHora = ordenats.filter(function (it) { return it.horaInici; });
     if (ambHora.length === 0) return { ok: true, resultat: {} };
 
@@ -1790,6 +2167,13 @@
             state.programacioEdicio = ultima.id;
           }
         }
+        if (n.id === "literari") {
+          var edL = state.edicions[state.cicleActiu] || [];
+          if (!state.literariEdicio && edL.length > 0) {
+            var ultimaL = edL.slice().sort(function (a, b) { return (b.any || 0) - (a.any || 0); })[0];
+            state.literariEdicio = ultimaL.id;
+          }
+        }
         if (n.id === "tasques") {
           var ed4 = state.edicions[state.cicleActiu] || [];
           if (!state.tarifesEdicio && ed4.length > 0) {
@@ -1808,6 +2192,7 @@
     if (state.tab === "resum") main.innerHTML = resumHtml();
     else if (state.tab === "edicions") main.innerHTML = edicionsHtml();
     else if (state.tab === "programacio") main.innerHTML = programacioHtml();
+    else if (state.tab === "literari") main.innerHTML = literariHtml();
     else if (state.tab === "curts") main.innerHTML = curtsLlargsHtml();
     else if (state.tab === "subtitols") main.innerHTML = subtitolsHtml();
     else if (state.tab === "premsa") main.innerHTML = premsaHtml();
@@ -2148,13 +2533,15 @@
   }
 
   function resumHtml() {
-    var totalSessions = 0, totalActivitats = 0, totalCurts = 0, totalJuvenils = 0;
+    var totalSessions = 0, totalActivitats = 0, totalCurts = 0, totalJuvenils = 0, totalLiterari = 0;
     CICLES.forEach(function (c) {
       (state.edicions[c.id] || []).forEach(function (ed) {
         totalSessions += sessionsPerCicle(c.id, ed.id).filter(function (s) { return !esSessioJuvenil(s); }).length;
         totalActivitats += activitatsEdicio(ed.id).filter(function (a) { return !esDescans(a); }).length;
         totalCurts += curtsEdicio(ed.id).length;
         totalJuvenils += sessionsPerCicle(c.id, ed.id).filter(function (s) { return esSessioJuvenil(s); }).length;
+        var acte = literariPerEdicio(ed.id);
+        if (acte) totalLiterari += acte.items.length;
       });
     });
     var pendents = state.tasques.filter(function (t) { return !t.fet; }).length;
@@ -2164,6 +2551,7 @@
       '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;">' +
       '<div class="csx-stat" data-nav="programacio"><span class="csx-stat-num">' + totalSessions + '</span><span class="csx-stat-label">Sessions</span></div>' +
       '<div class="csx-stat" data-nav="programacio"><span class="csx-stat-num">' + totalJuvenils + '</span><span class="csx-stat-label">Sessions Juvenils</span></div>' +
+      '<div class="csx-stat" data-nav="literari"><span class="csx-stat-num">' + totalLiterari + '</span><span class="csx-stat-label">Actes literaris</span></div>' +
       '<div class="csx-stat" data-nav="curts"><span class="csx-stat-num">' + totalCurts + '</span><span class="csx-stat-label">Curts/Llargs</span></div>' +
       '<div class="csx-stat" data-nav="tasques"><span class="csx-stat-num">' + pendents + '</span><span class="csx-stat-label">Tasques pendents</span></div>' +
       '</div>' +
@@ -2192,11 +2580,13 @@
       var nJ = sessionsPerCicle(state.cicleActiu, e.id).filter(function (s) { return esSessioJuvenil(s); }).length;
       var nA = activitatsEdicio(e.id).filter(function (a) { return !esDescans(a); }).length;
       var nC = curtsEdicio(e.id).length;
+      var teLit = !!literariPerEdicio(e.id);
       var etiqueta = e.nom ? escapeHtml(e.nom) : "Edició " + escapeHtml(e.any);
       return '<div class="csx-session-row" data-obrir-edicio="' + e.id + '">' +
         '<div class="csx-session-row-main">' +
         '<span class="csx-session-num">' + etiqueta + '</span>' +
         '<span class="csx-session-tipus">' + escapeHtml(e.any) + '</span>' +
+        (teLit ? '<span class="csx-session-tipus lit">Literari</span>' : '') +
         '</div>' +
         '<span class="csx-session-count">' +
           nS + ' sessions' +
@@ -2245,6 +2635,243 @@
     return '<section class="csx-panel">' + subnav + body + '</section>';
   }
 
+  // ---- LITERARI: HTML ----
+  function literariHtml() {
+    var edicions = state.edicions[state.cicleActiu] || [];
+    var edicioId = state.literariEdicio;
+    if (!edicioId && edicions.length > 0) {
+      var ultima = edicions.slice().sort(function (a, b) { return (b.any || 0) - (a.any || 0); })[0];
+      edicioId = ultima.id; state.literariEdicio = edicioId;
+    }
+    var edicio = edicions.filter(function (e) { return e.id === edicioId; })[0];
+
+    var selectEdicio = '<select id="lit-edicio">' +
+      (edicions.length === 0 ? '<option value="">(cap edició)</option>' : "") +
+      edicions.slice().sort(function (a, b) { return (b.any || 0) - (a.any || 0); }).map(function (e) {
+        var lbl = e.nom ? e.nom + " (" + e.any + ")" : "Edició " + e.any;
+        return '<option value="' + e.id + '"' + (e.id === edicioId ? " selected" : "") + '>' + escapeHtml(lbl) + '</option>';
+      }).join("") + '</select>';
+
+    if (!edicio) {
+      return '<section class="csx-panel"><div class="csx-panel-head"><div>' +
+        '<div class="csx-eyebrow">Cryptshow Literari</div><h2>Selecciona una edició</h2></div>' +
+        '<div>' + selectEdicio + '</div></div>' +
+        '<p class="csx-empty">Encara no hi ha cap edició creada en aquest cicle. Ves a <button class="csx-link-btn" data-nav="edicions">Edicions</button> per crear-ne una.</p></section>';
+    }
+
+    var acte = literariPerEdicio(edicio.id);
+
+    var capçalera = '<div class="csx-panel-head"><div>' +
+      '<div class="csx-eyebrow">Cryptshow Literari · ' + escapeHtml(cicleLabel(CICLES.filter(function (c) { return c.id === state.cicleActiu; })[0])) + '</div>' +
+      '<h2>' + (acte ? escapeHtml(acte.nom || "Acte literari") : "Nou acte literari") + '</h2></div>' +
+      '<div style="display:flex;gap:8px;align-items:center;">' + selectEdicio +
+      (acte ? '<button class="csx-btn csx-btn-sec" id="lit-export-csv">Exportar CSV</button>' +
+              '<button class="csx-btn csx-btn-sec" id="lit-export-pdf">Exportar PDF</button>' +
+              '<button class="csx-btn-lit csx-btn" id="lit-eliminar-acte">Eliminar acte</button>' : '') +
+      '</div></div>' +
+      '<p style="font-size:12px;color:var(--text-dim);margin:-8px 0 16px;">Treballant a: <strong style="color:var(--text);">' + escapeHtml(edicioLabel(edicio)) + '</strong></p>';
+
+    if (!acte) {
+      return '<section class="csx-panel">' + capçalera +
+        literariNouActeFormHtml(edicio.id) +
+        '</section>';
+    }
+
+    return '<section class="csx-panel">' + capçalera +
+      literariActeDetailHtml(edicio, acte) +
+      '</section>';
+  }
+
+  function literariNouActeFormHtml(edicioId) {
+    var f = state.literariNouActeForm || { dia: "", nom: "Cryptshow Literari", numEdicio: "", lloc: "", entrada: "Entrada lliure", presentador: "" };
+    return '<div class="csx-literari-form">' +
+      '<div class="csx-eyebrow" style="margin-bottom:10px;color:var(--accent-lit);">Crear acte literari</div>' +
+      '<div class="csx-form-row">' +
+      '<input id="lit-nom" class="csx-grow" placeholder="Nom de l\'acte" value="' + escapeHtml(f.nom) + '">' +
+      '<input id="lit-numEdicio" placeholder="Número d\'edició (ex: 3a edició)" value="' + escapeHtml(f.numEdicio) + '" style="width:180px;">' +
+      '<input type="date" id="lit-dia" value="' + escapeHtml(f.dia) + '">' +
+      '</div>' +
+      '<div class="csx-form-row">' +
+      '<input id="lit-lloc" class="csx-grow" placeholder="Lloc" value="' + escapeHtml(f.lloc) + '">' +
+      '<input id="lit-entrada" placeholder="Entrada" value="' + escapeHtml(f.entrada) + '" style="width:180px;">' +
+      '<input id="lit-presentador" placeholder="Presentador/a" value="' + escapeHtml(f.presentador) + '">' +
+      '</div>' +
+      '<div class="csx-form-row">' +
+      '<button class="csx-btn csx-btn-lit" id="lit-crear-acte">Crear acte</button>' +
+      '</div>' +
+      '</div>';
+  }
+
+  function literariActeDetailHtml(edicio, acte) {
+    var itemsOrdenats = acte.items.slice().sort(function (a, b) {
+      var ha = (a.horaInici || "99:99");
+      var hb = (b.horaInici || "99:99");
+      if (ha !== hb) return ha.localeCompare(hb);
+      var oa = (typeof a.ordre === "number") ? a.ordre : 9999;
+      var ob = (typeof b.ordre === "number") ? b.ordre : 9999;
+      return oa - ob;
+    });
+
+    var itemsAmbAvis = literariItemsAmbAvis(itemsOrdenats);
+
+    var files = itemsAmbAvis.map(function (x, i) {
+      var it = x.it;
+      var avis = x.avis ? '<span class="csx-avis-warn" title="Se solapa amb la següent">⚠ se solapa</span>' : '';
+      var fixIco = it.horaFixada ? '<span class="csx-fix-ico" title="Hora fixada">🔒</span>' : '';
+      var durTxt = it.durMin ? (it.durMin + " min") : "—";
+      var convidatsTxt = (it.convidats && it.convidats.length > 0) ? it.convidats.join(", ") : "";
+      var obraTxt = it.obra ? (" · " + it.obra) : "";
+      var metaParts = [];
+      if (convidatsTxt) metaParts.push("Convidats: " + escapeHtml(convidatsTxt));
+      if (it.obra) metaParts.push("Obra: " + escapeHtml(it.obra));
+      var meta = metaParts.length > 0 ? '<div class="csx-lit-item-meta">' + metaParts.join(" · ") + '</div>' : '';
+      var desc = it.descripcio ? '<div class="csx-lit-item-desc">' + escapeHtml(it.descripcio) + '</div>' : '';
+
+      return '<div class="csx-lit-item" draggable="true" data-lit-item="' + it.id + '">' +
+        '<span class="csx-drag-handle">⠿</span>' +
+        '<div class="csx-lit-item-main">' +
+        '<div class="csx-lit-item-head">' +
+        '<span class="csx-lit-item-hora">' + escapeHtml(it.horaInici || "—") + '–' + (it.durMin ? minutsAHora(horaAMinuts(it.horaInici || "00:00") + it.durMin) : "—") + fixIco + '</span>' +
+        '<span class="csx-lit-item-tipus">' + escapeHtml(it.tipus || "Xerrada") + '</span>' +
+        '<span class="csx-lit-item-titol">' + escapeHtml(it.titol || "(sense títol)") + '</span>' +
+        '<span class="csx-session-time">Durada: ' + escapeHtml(durTxt) + '</span>' +
+        avis +
+        '</div>' + meta + desc +
+        '</div>' +
+        '<div class="csx-lit-item-accions">' +
+        '<button data-lit-pujar="' + it.id + '" title="Pujar">▲ pujar</button>' +
+        '<button data-lit-baixar="' + it.id + '" title="Baixar">▼ baixar</button>' +
+        '<button data-lit-editar="' + it.id + '">editar</button>' +
+        '<button class="del" data-lit-eliminar-item="' + it.id + '">eliminar</button>' +
+        '</div>' +
+        '</div>';
+    }).join("");
+
+    var llista = itemsOrdenats.length === 0
+      ? '<p class="csx-empty">Encara no hi ha cap intervenció en aquest acte. Afegeix-ne una a sota.</p>'
+      : '<div class="csx-lit-llista" id="lit-llista-items">' + files + '</div>';
+
+    var metaActe = '<div class="csx-lit-acte-header">' +
+      '<h3>' + escapeHtml(acte.nom || "Acte literari") + (acte.numEdicio ? ' <span style="font-size:13px;color:var(--accent-lit);">· ' + escapeHtml(acte.numEdicio) + '</span>' : '') + '</h3>' +
+      '<div class="meta">' +
+      (acte.dia ? '<strong>Dia:</strong> ' + escapeHtml(dataLlarga(acte.dia)) + '<br>' : '') +
+      (acte.lloc ? '<strong>Lloc:</strong> ' + escapeHtml(acte.lloc) + '<br>' : '') +
+      (acte.entrada ? '<strong>Entrada:</strong> ' + escapeHtml(acte.entrada) + '<br>' : '') +
+      (acte.presentador ? '<strong>Presentador/a:</strong> ' + escapeHtml(acte.presentador) + '<br>' : '') +
+      (acte.moderadors && acte.moderadors.length > 0 ? '<strong>Moderadors:</strong> ' + escapeHtml(acte.moderadors.join(", ")) + '<br>' : '') +
+      (acte.colaboradors && acte.colaboradors.length > 0 ? '<strong>Col·laboradors:</strong> ' + escapeHtml(acte.colaboradors.join(", ")) : '') +
+      '</div>' +
+      '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">' +
+      '<button class="csx-link-btn" id="lit-editar-acte">✎ editar metadades de l\'acte</button>' +
+      '</div>' +
+      '</div>';
+
+    var formEdicioActe = state.literariEditarActe ? literariEditarActeFormHtml(acte) : "";
+
+    var formItem = literariItemFormHtml(acte);
+
+    return metaActe + formEdicioActe + llista + formItem;
+  }
+
+  function literariEditarActeFormHtml(acte) {
+    return '<div class="csx-literari-form">' +
+      '<div class="csx-eyebrow" style="margin-bottom:10px;color:var(--accent-lit);">Editar metadades de l\'acte</div>' +
+      '<div class="csx-form-row">' +
+      '<input id="lit-e-nom" class="csx-grow" placeholder="Nom" value="' + escapeHtml(acte.nom || "") + '">' +
+      '<input id="lit-e-numEdicio" placeholder="Número d\'edició" value="' + escapeHtml(acte.numEdicio || "") + '" style="width:180px;">' +
+      '<input type="date" id="lit-e-dia" value="' + escapeHtml(acte.dia || "") + '">' +
+      '</div>' +
+      '<div class="csx-form-row">' +
+      '<input id="lit-e-lloc" class="csx-grow" placeholder="Lloc" value="' + escapeHtml(acte.lloc || "") + '">' +
+      '<input id="lit-e-entrada" placeholder="Entrada" value="' + escapeHtml(acte.entrada || "") + '" style="width:180px;">' +
+      '<input id="lit-e-presentador" placeholder="Presentador/a" value="' + escapeHtml(acte.presentador || "") + '">' +
+      '</div>' +
+      '<div class="csx-form-row">' +
+      '<div style="flex:1;min-width:220px;">' +
+      '<div class="csx-day-subhead">Moderadors</div>' +
+      literariLlistaTextosHtml(acte.moderadors || [], "moderadors") +
+      '</div>' +
+      '<div style="flex:1;min-width:220px;">' +
+      '<div class="csx-day-subhead">Col·laboradors</div>' +
+      literariLlistaTextosHtml(acte.colaboradors || [], "colaboradors") +
+      '</div>' +
+      '</div>' +
+      '<div class="csx-form-row" style="margin-bottom:0;">' +
+      '<button class="csx-btn" id="lit-desar-acte">Desar canvis</button>' +
+      '<button class="csx-link-btn" id="lit-cancelar-editar-acte">cancel·lar</button>' +
+      '</div>' +
+      '</div>';
+  }
+
+  function literariLlistaTextosHtml(llista, camp) {
+    var tags = llista.map(function (txt, i) {
+      return '<span class="csx-lit-tag">' + escapeHtml(txt) +
+        '<button type="button" data-lit-del-text="' + camp + '" data-lit-del-index="' + i + '" title="Treure">×</button></span>';
+    }).join("");
+    var inputVal = (state.literariCampsForm && state.literariCampsForm[camp]) || "";
+    return '<div class="csx-lit-tags">' + (tags || '<span style="font-size:12px;color:var(--text-dim);">(cap)</span>') + '</div>' +
+      '<div class="csx-lit-add-row">' +
+      '<input type="text" data-lit-add-text="' + camp + '" placeholder="Afegir…" value="' + escapeHtml(inputVal) + '">' +
+      '<button type="button" class="csx-btn csx-btn-sec" data-lit-add-btn="' + camp + '">+ afegir</button>' +
+      '</div>';
+  }
+
+  function literariItemFormHtml(acte) {
+    var f = state.literariItemForm || null;
+    var esEdit = !!(f && f._editId);
+    var valors = f || {
+      horaInici: "", horaFixada: false, durMin: "", tipus: "Xerrada",
+      titol: "", convidats: [], obra: "", descripcio: ""
+    };
+    var convidats = valors.convidats || [];
+    var convidatsTags = convidats.map(function (txt, i) {
+      return '<span class="csx-lit-tag">' + escapeHtml(txt) +
+        '<button type="button" data-lit-del-convidat="' + i + '" title="Treure">×</button></span>';
+    }).join("");
+    var fixSel = valors.horaFixada ? " checked" : "";
+    var fixCls = valors.horaFixada ? " sel" : "";
+    var tipusOpcions = TIPUS_LITERARI.map(function (t) {
+      return '<option value="' + escapeHtml(t) + '"' + (valors.tipus === t ? " selected" : "") + '>' + escapeHtml(t) + '</option>';
+    }).join("");
+    var convidatInputVal = (state.literariCampsForm && state.literariCampsForm.convidats) || "";
+
+    return '<div class="csx-literari-form" id="lit-form-item">' +
+      '<div class="csx-eyebrow" style="margin-bottom:10px;color:var(--accent-lit);">' +
+      (esEdit ? 'Editar intervenció' : 'Nova intervenció') + '</div>' +
+      '<div class="csx-form-row">' +
+      '<input type="time" id="lit-i-hora" value="' + escapeHtml(valors.horaInici || "") + '">' +
+      '<label class="csx-fix-check' + fixCls + '">' +
+      '<input type="checkbox" id="lit-i-fixada"' + fixSel + '> Hora fixa</label>' +
+      '<div class="csx-dur-group">' +
+      '<input type="number" id="lit-i-dur" min="1" max="600" style="width:70px;" placeholder="min" value="' + escapeHtml(valors.durMin || "") + '"><span>min (obligatori)</span>' +
+      '</div>' +
+      '<select id="lit-i-tipus">' + tipusOpcions + '</select>' +
+      '</div>' +
+      '<div class="csx-form-row">' +
+      '<input id="lit-i-titol" class="csx-grow" placeholder="Títol de la intervenció" value="' + escapeHtml(valors.titol || "") + '">' +
+      '<input id="lit-i-obra" class="csx-grow" placeholder="Obra (opcional)" value="' + escapeHtml(valors.obra || "") + '">' +
+      '</div>' +
+      '<div class="csx-form-row" style="align-items:flex-start;">' +
+      '<div style="flex:1;min-width:220px;">' +
+      '<div class="csx-day-subhead">Convidats</div>' +
+      '<div class="csx-lit-tags">' + (convidatsTags || '<span style="font-size:12px;color:var(--text-dim);">(cap)</span>') + '</div>' +
+      '<div class="csx-lit-add-row">' +
+      '<input type="text" id="lit-i-convidat-input" placeholder="Afegir convidat…" value="' + escapeHtml(convidatInputVal) + '">' +
+      '<button type="button" class="csx-btn csx-btn-sec" id="lit-i-add-convidat">+ afegir</button>' +
+      '</div>' +
+      '</div>' +
+      '</div>' +
+      '<div class="csx-form-row">' +
+      '<textarea id="lit-i-descripcio" class="csx-grow" rows="3" placeholder="Descripció" style="background:var(--panel-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;font-family:inherit;font-size:13px;border-radius:2px;resize:vertical;">' + escapeHtml(valors.descripcio || "") + '</textarea>' +
+      '</div>' +
+      '<div class="csx-form-row" style="margin-bottom:0;">' +
+      '<button class="csx-btn csx-btn-lit" id="lit-i-desar">' + (esEdit ? 'Desar canvis' : 'Afegir intervenció') + '</button>' +
+      (esEdit ? '<button class="csx-link-btn" id="lit-i-cancelar">cancel·lar edició</button>' : '') +
+      '</div>' +
+      '</div>';
+  }
+
+  // ---- Programació oficial (versió amb literari integrat) ----
   function programacioOficialHtml() {
     var edicions = state.edicions[state.cicleActiu] || [];
 
@@ -2340,12 +2967,104 @@
       formDescans = descansFormHtml(edicio.id);
     }
 
+    var teLit = !!literariPerEdicio(edicio.id);
+    var botoLit = teLit
+      ? '<button class="csx-btn csx-btn-lit" id="prog-obrir-literari" type="button" style="margin-left:8px;">📖 Obrir a Literari</button>'
+      : '';
+
     return '<div class="csx-panel-head"><div>' +
       '<div class="csx-eyebrow">Programació Oficial · ' + escapeHtml(cicleLabel(CICLES.filter(function (c) { return c.id === state.cicleActiu; })[0])) + '</div>' +
-      '<h2>' + escapeHtml(titol) + '</h2></div><div style="display:flex;gap:8px;align-items:center;">' + selectEdicio + botonsExport + '</div></div>' +
+      '<h2>' + escapeHtml(titol) + '</h2></div><div style="display:flex;gap:8px;align-items:center;">' + selectEdicio + botonsExport + botoLit + '</div></div>' +
       '<p style="font-size:12px;color:var(--text-dim);margin:-8px 0 16px;">Treballant a: <strong style="color:var(--text);">' + escapeHtml(edicioLabel(edicio)) + '</strong></p>' +
       formDescans +
       body;
+  }
+
+  function llistaProgramadaHtml(tots, edicio) {
+    if (tots.length === 0 && !literariPerEdicio(edicio.id)) {
+      return '<p class="csx-empty">Encara no hi ha res programat en aquesta edició.</p>' +
+        '<p class="csx-nota-final">' + escapeHtml(NOTA_FINAL_PROGRAMACIO) + '</p>';
+    }
+
+    var perDia = {};
+    tots.forEach(function (it) {
+      var dia = (it.dia || "").trim();
+      if (!perDia[dia]) perDia[dia] = [];
+      perDia[dia].push(it);
+    });
+
+    var acteLit = literariPerEdicio(edicio.id);
+    if (acteLit && acteLit.dia) {
+      var diaLit = acteLit.dia;
+      if (!perDia[diaLit]) perDia[diaLit] = [];
+      // No afegim l'acte com a item de programació; el mostrem com a bloc a part
+    }
+
+    var dies = Object.keys(perDia).sort(function (a, b) {
+      if (a === "" && b !== "") return -1;
+      if (b === "" && a !== "") return 1;
+      return a.localeCompare(b);
+    });
+
+    // Si l'acte literari té un dia que no apareix a perDia, l'afegim
+    if (acteLit && acteLit.dia && dies.indexOf(acteLit.dia) === -1) {
+      dies.push(acteLit.dia);
+      dies.sort(function (a, b) {
+        if (a === "" && b !== "") return -1;
+        if (b === "" && a !== "") return 1;
+        return a.localeCompare(b);
+      });
+    }
+
+    var html = dies.map(function (dia) {
+      var items = (perDia[dia] || []).slice().sort(function (a, b) {
+        return (a.horaInici || "99:99").localeCompare(b.horaInici || "99:99");
+      });
+      var diaCls = dia === "" ? " warn" : "";
+      var diaTxt = dia === "" ? "⚠ Sense dia assignat" : (dataLlarga(dia) || "Sense dia");
+      var contingut;
+      if (state.programacioAgrupacio === "sala") {
+        contingut = renderBlocsSalaHtml(items, tots, edicio, dia);
+      } else {
+        contingut = '<div class="csx-session-list" data-llista-dia="' + escapeHtml(dia) + '">' +
+          items.map(function (it) { return filaItemHtml(it, tots, edicio, true); }).join("") +
+          '</div>';
+      }
+      var blocLit = "";
+      if (acteLit && acteLit.dia === dia) {
+        blocLit = renderLiterariBlocHtml(acteLit);
+      }
+      return '<div class="csx-day-group" data-dia="' + escapeHtml(dia) + '">' +
+        '<div class="csx-day-header' + diaCls + '">' + escapeHtml(diaTxt) + '</div>' +
+        contingut +
+        blocLit +
+        '</div>';
+    }).join("");
+
+    html += '<p class="csx-nota-final">' + escapeHtml(NOTA_FINAL_PROGRAMACIO) + '</p>';
+    return html;
+  }
+
+  function renderLiterariBlocHtml(acte) {
+    var items = (acte.items || []).slice().sort(function (a, b) {
+      return (a.horaInici || "99:99").localeCompare(b.horaInici || "99:99");
+    });
+    var files = items.map(function (it) {
+      return '<div class="csx-session-row csx-lit" style="cursor:default;">' +
+        '<div class="csx-session-row-main">' +
+        '<span class="csx-session-time">' + escapeHtml(it.horaInici || "—") + (it.durMin ? '–' + minutsAHora(horaAMinuts(it.horaInici || "00:00") + it.durMin) : '') + '</span>' +
+        '<span class="csx-session-num">' + escapeHtml(it.titol || "(sense títol)") + '</span>' +
+        '<span class="csx-session-tipus lit">' + escapeHtml(it.tipus || "Xerrada") + '</span>' +
+        (it.convidats && it.convidats.length > 0 ? '<span class="csx-session-desc">' + escapeHtml(it.convidats.join(", ")) + '</span>' : '') +
+        '</div>' +
+        '</div>';
+    }).join("");
+    return '<div class="csx-bloc-sala-header" style="color:var(--accent-lit);border-bottom-color:var(--accent-lit);">' +
+      '📖 ' + escapeHtml(acte.nom || "Cryptshow Literari") +
+      (acte.numEdicio ? ' · ' + escapeHtml(acte.numEdicio) : '') +
+      (acte.lloc ? ' · ' + escapeHtml(acte.lloc) : '') +
+      '</div>' +
+      '<div class="csx-session-list" style="margin-bottom:14px;">' + files + '</div>';
   }
 
   function descansFormHtml(edId) {
@@ -2398,49 +3117,6 @@
       '</div>';
   }
 
-  function llistaProgramadaHtml(tots, edicio) {
-    if (tots.length === 0) {
-      return '<p class="csx-empty">Encara no hi ha res programat en aquesta edició.</p>' +
-        '<p class="csx-nota-final">' + escapeHtml(NOTA_FINAL_PROGRAMACIO) + '</p>';
-    }
-
-    var perDia = {};
-    tots.forEach(function (it) {
-      var dia = (it.dia || "").trim();
-      if (!perDia[dia]) perDia[dia] = [];
-      perDia[dia].push(it);
-    });
-    var dies = Object.keys(perDia).sort(function (a, b) {
-      // Els buits primer
-      if (a === "" && b !== "") return -1;
-      if (b === "" && a !== "") return 1;
-      return a.localeCompare(b);
-    });
-
-    var html = dies.map(function (dia) {
-      var items = perDia[dia].slice().sort(function (a, b) {
-        return (a.horaInici || "99:99").localeCompare(b.horaInici || "99:99");
-      });
-      var diaCls = dia === "" ? " warn" : "";
-      var diaTxt = dia === "" ? "⚠ Sense dia assignat" : (dataLlarga(dia) || "Sense dia");
-      var contingut;
-      if (state.programacioAgrupacio === "sala") {
-        contingut = renderBlocsSalaHtml(items, tots, edicio, dia);
-      } else {
-        contingut = '<div class="csx-session-list" data-llista-dia="' + escapeHtml(dia) + '">' +
-          items.map(function (it) { return filaItemHtml(it, tots, edicio, true); }).join("") +
-          '</div>';
-      }
-      return '<div class="csx-day-group" data-dia="' + escapeHtml(dia) + '">' +
-        '<div class="csx-day-header' + diaCls + '">' + escapeHtml(diaTxt) + '</div>' +
-        contingut +
-        '</div>';
-    }).join("");
-
-    html += '<p class="csx-nota-final">' + escapeHtml(NOTA_FINAL_PROGRAMACIO) + '</p>';
-    return html;
-  }
-
   function renderBlocsSalaHtml(items, tots, edicio, dia) {
     var blocs = [];
     var blocActual = null;
@@ -2480,7 +3156,6 @@
     var cls = "";
     if (esDes) cls = " csx-descans";
     else if (esJuv) cls = " csx-juv";
-    // Avís si falta dia o hora
     var faltaDia = !it.dia;
     var faltaHora = !it.horaInici;
     if (faltaDia || faltaHora) cls += " csx-warn";
@@ -2518,6 +3193,7 @@
       '</div>';
   }
 
+  // ---- Resta de funcions existents (sense canvis) ----
   function programacioFitxesHtml() {
     var edicions = state.edicions[state.cicleActiu] || [];
 
@@ -2950,7 +3626,6 @@
       '<input type="number" id="jc-dur-sec" min="0" max="59" placeholder="0" style="width:56px"><span>seg</span>' +
       '</div><button class="csx-btn csx-btn-juv" id="jc-afegir">Afegir curt</button></div>' + taula;
   }
-
   function curtsLlargsHtml() {
     var edicions = state.edicions[state.cicleActiu] || [];
     var edicioId = state.premsaEdicio;
@@ -3303,12 +3978,73 @@
       '</section>';
   }
 
+   function paisosUnics(edicio) {
+    if (!edicio) return [];
+    var set = {};
+    curtsEdicio(edicio.id).forEach(function (c) {
+      var p = (c.pais || "").trim();
+      if (p) set[p] = true;
+    });
+    return Object.keys(set).sort(function (a, b) { return a.localeCompare(b); });
+  }
+
+  function aplicarFiltresPremsa(llista) {
+    return llista.filter(function (c) {
+      var teTAC = !!c.esTac;
+      var teJuv = !!c.esJuvenil;
+      var filtreTAC = state.premsaFiltreTAC;
+      var filtreJuv = state.premsaFiltreJuvenil;
+      if (filtreTAC || filtreJuv) {
+        var passa = false;
+        if (filtreTAC && teTAC) passa = true;
+        if (filtreJuv && teJuv) passa = true;
+        if (!passa) return false;
+      }
+      if (state.premsaFiltrePais) {
+        if ((c.pais || "").trim() !== state.premsaFiltrePais) return false;
+      }
+      return true;
+    });
+  }
+
   function premsaExportFormHtml() {
+    var edicions = state.edicions[state.cicleActiu] || [];
+    var edicio = edicions.filter(function (e) { return e.id === state.premsaEdicio; })[0];
+
     var checks = CAMPS_PREMSA.map(function (c) {
       var sel = state.premsaCampsSeleccionats[c.key] ? " checked" : "";
       var cls = state.premsaCampsSeleccionats[c.key] ? "sel" : "";
       return '<label class="' + cls + '"><input type="checkbox" data-export-camp="' + c.key + '"' + sel + '>' + c.label + '</label>';
     }).join("");
+
+    var tacSel = state.premsaFiltreTAC ? " checked" : "";
+    var juvSel = state.premsaFiltreJuvenil ? " checked" : "";
+    var tacCls = state.premsaFiltreTAC ? " sel" : "";
+    var juvCls = state.premsaFiltreJuvenil ? " sel" : "";
+
+    var paisos = edicio ? paisosUnics(edicio) : [];
+    var opcionsPais = '<option value="">— Tots els països —</option>' +
+      paisos.map(function (p) {
+        var sel = (state.premsaFiltrePais === p) ? " selected" : "";
+        return '<option value="' + escapeHtml(p) + '"' + sel + '>' + escapeHtml(p) + '</option>';
+      }).join("");
+
+    var seccTotes = state.premsaFiltreSeccio === "totes" ? " checked" : "";
+    var seccOfi = state.premsaFiltreSeccio === "oficial" ? " checked" : "";
+    var seccFora = state.premsaFiltreSeccio === "fora" ? " checked" : "";
+
+    var recompte = 0;
+    if (edicio) {
+      var tots = [];
+      if (state.premsaFiltreSeccio === "totes" || state.premsaFiltreSeccio === "oficial") {
+        tots = tots.concat(curtsPerSeccio(edicio.id, "oficial"));
+      }
+      if (state.premsaFiltreSeccio === "totes" || state.premsaFiltreSeccio === "fora") {
+        tots = tots.concat(curtsPerSeccio(edicio.id, "fora"));
+      }
+      recompte = aplicarFiltresPremsa(tots).length;
+    }
+
     return '<div class="csx-export-form">' +
       '<div class="csx-eyebrow" style="margin-bottom:10px;">Exportar dades de premsa</div>' +
       '<div class="csx-camps-grid">' + checks + '</div>' +
@@ -3316,12 +4052,44 @@
       '<button class="csx-link-btn" id="premsa-tots">Tots</button>' +
       '<button class="csx-link-btn" id="premsa-cap">Cap</button>' +
       '</div>' +
+
+      '<div class="csx-filtres-bloc">' +
+      '<div class="csx-filtres-titol">Filtres</div>' +
+
+      '<div class="csx-filtre-fila">' +
+      '<span class="csx-filtre-label">Tipus:</span>' +
+      '<label class="csx-filtre-check tac' + tacCls + '">' +
+      '<input type="checkbox" id="premsa-filtre-tac"' + tacSel + '> TAC</label>' +
+      '<label class="csx-filtre-check juv' + juvCls + '">' +
+      '<input type="checkbox" id="premsa-filtre-juvenil"' + juvSel + '> Juvenil</label>' +
+      '</div>' +
+
+      '<div class="csx-filtre-fila">' +
+      '<span class="csx-filtre-label">País:</span>' +
+      '<select id="premsa-filtre-pais" style="min-width:200px;">' + opcionsPais + '</select>' +
+      '</div>' +
+
+      '<div class="csx-filtre-fila">' +
+      '<span class="csx-filtre-label">Secció:</span>' +
+      '<label class="csx-filtre-radio' + (state.premsaFiltreSeccio === "totes" ? " sel" : "") + '">' +
+      '<input type="radio" name="premsa-filtre-seccio" value="totes"' + seccTotes + '> Totes</label>' +
+      '<label class="csx-filtre-radio' + (state.premsaFiltreSeccio === "oficial" ? " sel" : "") + '">' +
+      '<input type="radio" name="premsa-filtre-seccio" value="oficial"' + seccOfi + '> Secció Oficial</label>' +
+      '<label class="csx-filtre-radio' + (state.premsaFiltreSeccio === "fora" ? " sel" : "") + '">' +
+      '<input type="radio" name="premsa-filtre-seccio" value="fora"' + seccFora + '> Fora de competició / Llargs</label>' +
+      '</div>' +
+
+      '<div class="csx-filtre-resum">' +
+      'S\'exportaran <strong>' + recompte + '</strong> curt(s) amb els filtres aplicats.' +
+      '</div>' +
+      '</div>' +
+
       '<div class="csx-form-row" style="margin-bottom:0;">' +
       '<button class="csx-btn" id="premsa-export-excel">Exportar Excel</button>' +
       '<button class="csx-btn csx-btn-sec" id="premsa-export-pdf">Exportar PDF</button>' +
       '<button class="csx-link-btn" id="premsa-export-cancel">cancel·lar</button>' +
       '</div>' +
-      '<p style="font-size:11px;color:var(--text-dim);margin:10px 0 0;">S\'exporten totes dues seccions (Oficial + Fora) amb la columna "Secció" afegida automàticament. La selecció de camps es recorda.</p>' +
+      '<p style="font-size:11px;color:var(--text-dim);margin:10px 0 0;">La selecció de camps i filtres es recorda durant la sessió.</p>' +
       '</div>';
   }
 
@@ -3414,6 +4182,7 @@
       '</table>';
   }
 
+  // ===================== ATTACH HANDLERS =====================
   function attachHandlers() {
     var main = document.getElementById("csx-main");
     if (!main) return;
@@ -3464,6 +4233,7 @@
         btn.addEventListener("click", function () {
           state.cicleActiu = btn.getAttribute("data-cicle");
           state.premsaEdicio = null; state.subtitolsEdicio = null; state.programacioEdicio = null; state.tarifesEdicio = null;
+          state.literariEdicio = null; state.literariActeObert = null;
           render();
         });
       });
@@ -3524,21 +4294,415 @@
           delete state.curts[id];
           delete state.subtitolsMeta[id];
           delete state.tarifes[id];
+          delete state.literari[id];
           db.ref("cryptshow/sessions/" + state.cicleActiu + "/" + id).remove();
           db.ref("cryptshow/activitats/" + id).remove();
           db.ref("cryptshow/curts/" + id).remove();
           db.ref("cryptshow/subtitolsMeta/" + id).remove();
           db.ref("cryptshow/preus/" + id).remove();
+          db.ref("cryptshow/literari/" + id).remove();
           if (state.edicioOberta === id) state.edicioOberta = null;
           if (state.programacioEdicio === id) state.programacioEdicio = null;
           if (state.premsaEdicio === id) state.premsaEdicio = null;
           if (state.subtitolsEdicio === id) state.subtitolsEdicio = null;
           if (state.tarifesEdicio === id) state.tarifesEdicio = null;
+          if (state.literariEdicio === id) state.literariEdicio = null;
           render();
         });
       });
     }
 
+    // ===================== LITERARI =====================
+    if (state.tab === "literari") {
+      var selLit = document.getElementById("lit-edicio");
+      if (selLit) selLit.addEventListener("change", function () {
+        state.literariEdicio = selLit.value;
+        state.literariActeObert = null;
+        state.literariItemForm = null;
+        state.literariEditarActe = false;
+        state.literariNouActeForm = null;
+        render();
+      });
+
+      // Crear acte
+      var formNouActe = document.getElementById("lit-nom");
+      if (formNouActe) {
+        var fNom = document.getElementById("lit-nom");
+        var fNum = document.getElementById("lit-numEdicio");
+        var fDia = document.getElementById("lit-dia");
+        var fLloc = document.getElementById("lit-lloc");
+        var fEnt = document.getElementById("lit-entrada");
+        var fPres = document.getElementById("lit-presentador");
+        if (!state.literariNouActeForm) {
+          state.literariNouActeForm = { dia: "", nom: "Cryptshow Literari", numEdicio: "", lloc: "", entrada: "Entrada lliure", presentador: "" };
+        }
+        if (fNom) fNom.addEventListener("input", function () { state.literariNouActeForm.nom = fNom.value; });
+        if (fNum) fNum.addEventListener("input", function () { state.literariNouActeForm.numEdicio = fNum.value; });
+        if (fDia) fDia.addEventListener("input", function () { state.literariNouActeForm.dia = fDia.value; });
+        if (fLloc) fLloc.addEventListener("input", function () { state.literariNouActeForm.lloc = fLloc.value; });
+        if (fEnt) fEnt.addEventListener("input", function () { state.literariNouActeForm.entrada = fEnt.value; });
+        if (fPres) fPres.addEventListener("input", function () { state.literariNouActeForm.presentador = fPres.value; });
+        var btnCrear = document.getElementById("lit-crear-acte");
+        if (btnCrear) btnCrear.addEventListener("click", function () {
+          var f = state.literariNouActeForm || {};
+          if (!f.nom || !f.nom.trim()) { window.alert("Cal un nom per a l'acte."); return; }
+          if (!f.dia) { window.alert("Cal un dia per a l'acte."); return; }
+          var edId = state.literariEdicio;
+          if (!edId) { window.alert("Selecciona una edició."); return; }
+          var actId = uid();
+          var acte = {
+            id: actId,
+            dia: f.dia,
+            nom: f.nom.trim(),
+            numEdicio: (f.numEdicio || "").trim(),
+            lloc: (f.lloc || "").trim(),
+            entrada: (f.entrada || "").trim(),
+            presentador: (f.presentador || "").trim(),
+            moderadors: [],
+            colaboradors: [],
+            items: {}
+          };
+          db.ref("cryptshow/literari/" + edId + "/" + actId).set(acte);
+          state.literariNouActeForm = null;
+          state.literariActeObert = actId;
+          render();
+        });
+      }
+
+      // Acte existent
+      var acte = literariPerEdicio(state.literariEdicio);
+      if (acte) {
+        var actId = acte._actId;
+        var edId = state.literariEdicio;
+
+        // Eliminar acte
+        var btnElimActe = document.getElementById("lit-eliminar-acte");
+        if (btnElimActe) btnElimActe.addEventListener("click", function () {
+          if (!window.confirm("Eliminar tot l'acte literari d'aquesta edició?")) return;
+          eliminarLiterariActe(edId, actId);
+          state.literariActeObert = null;
+          state.literariItemForm = null;
+          state.literariEditarActe = false;
+          render();
+        });
+
+        // Export
+        var btnCSV = document.getElementById("lit-export-csv");
+        if (btnCSV) btnCSV.addEventListener("click", function () { exportarLiterariCSV(); });
+        var btnPDF = document.getElementById("lit-export-pdf");
+        if (btnPDF) btnPDF.addEventListener("click", function () { exportarLiterariPDF(); });
+
+        // Editar metadades de l'acte
+        var btnEditarActe = document.getElementById("lit-editar-acte");
+        if (btnEditarActe) btnEditarActe.addEventListener("click", function () {
+          state.literariEditarActe = true;
+          render();
+        });
+        var btnCancelarEditar = document.getElementById("lit-cancelar-editar-acte");
+        if (btnCancelarEditar) btnCancelarEditar.addEventListener("click", function () {
+          state.literariEditarActe = false;
+          state.literariCampsForm = { moderadors: "", colaboradors: "" };
+          render();
+        });
+
+        if (state.literariEditarActe) {
+          var eNom = document.getElementById("lit-e-nom");
+          var eNum = document.getElementById("lit-e-numEdicio");
+          var eDia = document.getElementById("lit-e-dia");
+          var eLloc = document.getElementById("lit-e-lloc");
+          var eEnt = document.getElementById("lit-e-entrada");
+          var ePres = document.getElementById("lit-e-presentador");
+          if (eNom) eNom.addEventListener("change", function () { desarLiterariActe(edId, actId, { nom: eNom.value }); });
+          if (eNum) eNum.addEventListener("change", function () { desarLiterariActe(edId, actId, { numEdicio: eNum.value }); });
+          if (eDia) eDia.addEventListener("change", function () { desarLiterariActe(edId, actId, { dia: eDia.value }); });
+          if (eLloc) eLloc.addEventListener("change", function () { desarLiterariActe(edId, actId, { lloc: eLloc.value }); });
+          if (eEnt) eEnt.addEventListener("change", function () { desarLiterariActe(edId, actId, { entrada: eEnt.value }); });
+          if (ePres) ePres.addEventListener("change", function () { desarLiterariActe(edId, actId, { presentador: ePres.value }); });
+
+          // Llistes de textos (moderadors / colaboradors)
+          main.querySelectorAll("[data-lit-add-text]").forEach(function (inp) {
+            var camp = inp.getAttribute("data-lit-add-text");
+            inp.addEventListener("input", function () {
+              state.literariCampsForm[camp] = inp.value;
+            });
+            inp.addEventListener("keydown", function (e) {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                var btn = main.querySelector('[data-lit-add-btn="' + camp + '"]');
+                if (btn) btn.click();
+              }
+            });
+          });
+          main.querySelectorAll("[data-lit-add-btn]").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+              var camp = btn.getAttribute("data-lit-add-btn");
+              var val = (state.literariCampsForm[camp] || "").trim();
+              if (!val) return;
+              var llista = (acte[camp] || []).slice();
+              llista.push(val);
+              var canvi = {};
+              canvi[camp] = llista;
+              desarLiterariActe(edId, actId, canvi);
+              state.literariCampsForm[camp] = "";
+            });
+          });
+          main.querySelectorAll("[data-lit-del-text]").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+              var camp = btn.getAttribute("data-lit-del-text");
+              var idx = parseInt(btn.getAttribute("data-lit-del-index"), 10);
+              var llista = (acte[camp] || []).slice();
+              llista.splice(idx, 1);
+              var canvi = {};
+              canvi[camp] = llista;
+              desarLiterariActe(edId, actId, canvi);
+            });
+          });
+
+          var btnDesar = document.getElementById("lit-desar-acte");
+          if (btnDesar) btnDesar.addEventListener("click", function () {
+            state.literariEditarActe = false;
+            state.literariCampsForm = { moderadors: "", colaboradors: "" };
+            render();
+          });
+        }
+
+        // ---- Item form ----
+        var items = acte.items || [];
+        var f = state.literariItemForm || null;
+        var esEdit = !!(f && f._editId);
+
+        if (!f) {
+          state.literariItemForm = {
+            horaInici: "", horaFixada: false, durMin: "", tipus: "Xerrada",
+            titol: "", convidats: [], obra: "", descripcio: ""
+          };
+          f = state.literariItemForm;
+        }
+
+        var iHora = document.getElementById("lit-i-hora");
+        var iFix = document.getElementById("lit-i-fixada");
+        var iDur = document.getElementById("lit-i-dur");
+        var iTipus = document.getElementById("lit-i-tipus");
+        var iTitol = document.getElementById("lit-i-titol");
+        var iObra = document.getElementById("lit-i-obra");
+        var iDesc = document.getElementById("lit-i-descripcio");
+        var iConvInput = document.getElementById("lit-i-convidat-input");
+        var btnAddConv = document.getElementById("lit-i-add-convidat");
+
+        if (iHora) iHora.addEventListener("input", function () { f.horaInici = iHora.value; });
+        if (iFix) iFix.addEventListener("change", function () {
+          f.horaFixada = iFix.checked;
+          var lbl = iFix.parentElement;
+          if (lbl) lbl.className = "csx-fix-check" + (iFix.checked ? " sel" : "");
+        });
+        if (iDur) iDur.addEventListener("input", function () { f.durMin = iDur.value; });
+        if (iTipus) iTipus.addEventListener("change", function () { f.tipus = iTipus.value; });
+        if (iTitol) iTitol.addEventListener("input", function () { f.titol = iTitol.value; });
+        if (iObra) iObra.addEventListener("input", function () { f.obra = iObra.value; });
+        if (iDesc) iDesc.addEventListener("input", function () { f.descripcio = iDesc.value; });
+
+        if (iConvInput) iConvInput.addEventListener("input", function () {
+          state.literariCampsForm.convidats = iConvInput.value;
+        });
+        if (iConvInput) iConvInput.addEventListener("keydown", function (e) {
+          if (e.key === "Enter") { e.preventDefault(); if (btnAddConv) btnAddConv.click(); }
+        });
+        if (btnAddConv) btnAddConv.addEventListener("click", function () {
+          var val = (state.literariCampsForm.convidats || "").trim();
+          if (!val) return;
+          f.convidats = (f.convidats || []).slice();
+          f.convidats.push(val);
+          state.literariCampsForm.convidats = "";
+          render();
+        });
+        main.querySelectorAll("[data-lit-del-convidat]").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            var idx = parseInt(btn.getAttribute("data-lit-del-convidat"), 10);
+            f.convidats = (f.convidats || []).slice();
+            f.convidats.splice(idx, 1);
+            render();
+          });
+        });
+
+        var btnDesarItem = document.getElementById("lit-i-desar");
+        if (btnDesarItem) btnDesarItem.addEventListener("click", function () {
+          var hora = (f.horaInici || "").trim();
+          var dur = parseInt(f.durMin, 10);
+          var titol = (f.titol || "").trim();
+          if (!hora) { window.alert("Cal una hora d'inici."); return; }
+          if (!dur || dur < 1) { window.alert("Cal una durada (en minuts). És obligatòria."); return; }
+          if (!titol) { window.alert("Cal un títol."); return; }
+
+          if (esEdit) {
+            var canvis = {
+              horaInici: hora,
+              horaFixada: !!f.horaFixada,
+              durMin: dur,
+              tipus: f.tipus || "Xerrada",
+              titol: titol,
+              convidats: f.convidats || [],
+              obra: (f.obra || "").trim(),
+              descripcio: (f.descripcio || "").trim()
+            };
+            desarLiterariItem(edId, actId, f._editId, canvis);
+            state.literariItemForm = null;
+            state.literariCampsForm.convidats = "";
+          } else {
+            // ordre = màxim + 1
+            var maxOrdre = -1;
+            items.forEach(function (it) {
+              var o = (typeof it.ordre === "number") ? it.ordre : 0;
+              if (o > maxOrdre) maxOrdre = o;
+            });
+            var nouItem = {
+              id: uid(),
+              ordre: maxOrdre + 1,
+              horaInici: hora,
+              horaFixada: !!f.horaFixada,
+              durMin: dur,
+              tipus: f.tipus || "Xerrada",
+              titol: titol,
+              convidats: f.convidats || [],
+              obra: (f.obra || "").trim(),
+              descripcio: (f.descripcio || "").trim()
+            };
+            crearLiterariItem(edId, actId, nouItem);
+            state.literariItemForm = null;
+            state.literariCampsForm.convidats = "";
+          }
+          render();
+        });
+
+        var btnCancelarItem = document.getElementById("lit-i-cancelar");
+        if (btnCancelarItem) btnCancelarItem.addEventListener("click", function () {
+          state.literariItemForm = null;
+          state.literariCampsForm.convidats = "";
+          render();
+        });
+
+        // ---- Accions sobre items existents ----
+        main.querySelectorAll("[data-lit-editar]").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            var id = btn.getAttribute("data-lit-editar");
+            var it = items.filter(function (x) { return x.id === id; })[0];
+            if (!it) return;
+            state.literariItemForm = {
+              _editId: it.id,
+              horaInici: it.horaInici || "",
+              horaFixada: !!it.horaFixada,
+              durMin: it.durMin || "",
+              tipus: it.tipus || "Xerrada",
+              titol: it.titol || "",
+              convidats: (it.convidats || []).slice(),
+              obra: it.obra || "",
+              descripcio: it.descripcio || ""
+            };
+            state.literariCampsForm.convidats = "";
+            render();
+          });
+        });
+
+        main.querySelectorAll("[data-lit-eliminar-item]").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            var id = btn.getAttribute("data-lit-eliminar-item");
+            if (!window.confirm("Eliminar aquesta intervenció?")) return;
+            eliminarLiterariItem(edId, actId, id);
+            render();
+          });
+        });
+
+        // ---- Pujar / Baixar ----
+        function aplicarOrdre(ordreNou) {
+          var res = recalcularHoresItems(items, ordreNou);
+          if (!res.ok) {
+            window.alert(res.missatge);
+            render();
+            return;
+          }
+          // Aplica hores
+          items.forEach(function (it) {
+            if (res.resultat[it.id] !== undefined) {
+              it.horaInici = res.resultat[it.id];
+            }
+          });
+          // Desa ordre + hores amb update per registre
+          ordreNou.forEach(function (id, idx) {
+            var canvis = { ordre: idx };
+            var it = items.filter(function (x) { return x.id === id; })[0];
+            if (it && res.resultat[id] !== undefined) canvis.horaInici = res.resultat[id];
+            desarLiterariItem(edId, actId, id, canvis);
+          });
+          render();
+        }
+
+        function itemsOrdenats() {
+          return items.slice().sort(function (a, b) {
+            var ha = (a.horaInici || "99:99");
+            var hb = (b.horaInici || "99:99");
+            if (ha !== hb) return ha.localeCompare(hb);
+            var oa = (typeof a.ordre === "number") ? a.ordre : 9999;
+            var ob = (typeof b.ordre === "number") ? b.ordre : 9999;
+            return oa - ob;
+          });
+        }
+
+        main.querySelectorAll("[data-lit-pujar]").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            var id = btn.getAttribute("data-lit-pujar");
+            var ordenats = itemsOrdenats();
+            var idx = ordenats.map(function (x) { return x.id; }).indexOf(id);
+            if (idx <= 0) return;
+            var ordreNou = ordenats.map(function (x) { return x.id; });
+            var tmp = ordreNou[idx - 1];
+            ordreNou[idx - 1] = ordreNou[idx];
+            ordreNou[idx] = tmp;
+            aplicarOrdre(ordreNou);
+          });
+        });
+
+        main.querySelectorAll("[data-lit-baixar]").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            var id = btn.getAttribute("data-lit-baixar");
+            var ordenats = itemsOrdenats();
+            var idx = ordenats.map(function (x) { return x.id; }).indexOf(id);
+            if (idx < 0 || idx >= ordenats.length - 1) return;
+            var ordreNou = ordenats.map(function (x) { return x.id; });
+            var tmp = ordreNou[idx + 1];
+            ordreNou[idx + 1] = ordreNou[idx];
+            ordreNou[idx] = tmp;
+            aplicarOrdre(ordreNou);
+          });
+        });
+
+        // ---- Drag & drop d'items ----
+        var draggedLitId = null;
+        main.querySelectorAll("[data-lit-item]").forEach(function (row) {
+          row.addEventListener("dragstart", function (e) {
+            draggedLitId = row.getAttribute("data-lit-item");
+            row.classList.add("csx-dragging");
+            if (e.dataTransfer) { e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", draggedLitId); }
+          });
+          row.addEventListener("dragend", function () { row.classList.remove("csx-dragging"); });
+          row.addEventListener("dragover", function (e) { e.preventDefault(); });
+          row.addEventListener("drop", function (e) {
+            e.preventDefault();
+            var tid = row.getAttribute("data-lit-item");
+            if (!draggedLitId || draggedLitId === tid) return;
+            var ordenats = itemsOrdenats();
+            var ordreNou = ordenats.map(function (x) { return x.id; });
+            var fi = ordreNou.indexOf(draggedLitId);
+            var ti = ordreNou.indexOf(tid);
+            if (fi < 0 || ti < 0) return;
+            ordreNou.splice(fi, 1);
+            var nouIdx = ordreNou.indexOf(tid);
+            ordreNou.splice(nouIdx, 0, draggedLitId);
+            aplicarOrdre(ordreNou);
+          });
+        });
+      }
+    }
+
+    // ---- PROGRAMACIO (handlers existents + boto literari) ----
     if (state.tab === "programacio") {
       main.querySelectorAll("[data-prog-vista]").forEach(function (btn) {
         btn.addEventListener("click", function () {
@@ -3552,6 +4716,20 @@
       main.querySelectorAll("[data-agrupacio]").forEach(function (btn) {
         btn.addEventListener("click", function () {
           state.programacioAgrupacio = btn.getAttribute("data-agrupacio");
+          render();
+        });
+      });
+
+      main.querySelectorAll("#prog-obrir-literari").forEach(function (btn) {
+        btn.addEventListener("click", function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          state.tab = "literari";
+          state.literariEdicio = state.programacioEdicio;
+          var acte = literariPerEdicio(state.literariEdicio);
+          state.literariActeObert = acte ? acte._actId : null;
+          state.literariItemForm = null;
+          state.literariEditarActe = false;
           render();
         });
       });
@@ -4184,7 +5362,6 @@
           });
         });
 
-        // Drag & drop per dia
         var draggedItemId = null;
         var draggedItemDia = null;
         main.querySelectorAll("[data-drag-item]").forEach(function (row) {
@@ -4402,8 +5579,12 @@
     }
 
     if (state.tab === "premsa") {
-      var se = document.getElementById("premsa-edicio");
-      if (se) se.addEventListener("change", function () { state.premsaEdicio = se.value; render(); });
+            var se = document.getElementById("premsa-edicio");
+      if (se) se.addEventListener("change", function () {
+        state.premsaEdicio = se.value;
+        state.premsaFiltrePais = "";
+        render();
+      });
       main.querySelectorAll("[data-premsa-vista]").forEach(function (btn) {
         btn.addEventListener("click", function () { state.premsaSubVista = btn.getAttribute("data-premsa-vista"); render(); });
       });
@@ -4445,6 +5626,30 @@
         state.premsaExportObert = false;
         render();
       });
+           var pFTac = document.getElementById("premsa-filtre-tac");
+      if (pFTac) pFTac.addEventListener("change", function () {
+        state.premsaFiltreTAC = pFTac.checked;
+        render();
+      });
+      var pFJuv = document.getElementById("premsa-filtre-juvenil");
+      if (pFJuv) pFJuv.addEventListener("change", function () {
+        state.premsaFiltreJuvenil = pFJuv.checked;
+        render();
+      });
+      var pFPais = document.getElementById("premsa-filtre-pais");
+      if (pFPais) pFPais.addEventListener("change", function () {
+        state.premsaFiltrePais = pFPais.value;
+        render();
+      });
+      main.querySelectorAll('input[name="premsa-filtre-seccio"]').forEach(function (rb) {
+        rb.addEventListener("change", function () {
+          if (rb.checked) {
+            state.premsaFiltreSeccio = rb.value;
+            render();
+          }
+        });
+      });
+
       var pExcel = document.getElementById("premsa-export-excel");
       if (pExcel) pExcel.addEventListener("click", function () { exportarPremsaExcel(); });
       var pPdf = document.getElementById("premsa-export-pdf");
@@ -4593,7 +5798,8 @@
     reader.readAsText(file, "UTF-8");
   }
 
-  function construirFilesPremsaExport() {
+  // ---- EXPORTACIONS EXISTENTS ----
+    function construirFilesPremsaExport() {
     var edicions = state.edicions[state.cicleActiu] || [];
     var edicio = edicions.filter(function (e) { return e.id === state.premsaEdicio; })[0];
     if (!edicio) return null;
@@ -4612,13 +5818,32 @@
 
     var curtsOfi = curtsPerSeccio(edicio.id, "oficial");
     var curtsFora = curtsPerSeccio(edicio.id, "fora");
-    var tots = curtsOfi.map(function (c) {
-      return { c: c, seccio: "OFICIAL" };
-    }).concat(curtsFora.map(function (c) {
-      return { c: c, seccio: "FORA" };
-    }));
 
-    if (tots.length === 0) return null;
+    var tots = [];
+    if (state.premsaFiltreSeccio === "totes" || state.premsaFiltreSeccio === "oficial") {
+      tots = tots.concat(curtsOfi.map(function (c) { return { c: c, seccio: "OFICIAL" }; }));
+    }
+    if (state.premsaFiltreSeccio === "totes" || state.premsaFiltreSeccio === "fora") {
+      tots = tots.concat(curtsFora.map(function (c) { return { c: c, seccio: "FORA" }; }));
+    }
+
+    tots = tots.filter(function (item) {
+      var c = item.c;
+      var filtreTAC = state.premsaFiltreTAC;
+      var filtreJuv = state.premsaFiltreJuvenil;
+      if (filtreTAC || filtreJuv) {
+        var passa = false;
+        if (filtreTAC && c.esTac) passa = true;
+        if (filtreJuv && c.esJuvenil) passa = true;
+        if (!passa) return false;
+      }
+      if (state.premsaFiltrePais) {
+        if ((c.pais || "").trim() !== state.premsaFiltrePais) return false;
+      }
+      return true;
+    });
+
+    if (tots.length === 0) return { capçalera: [], files: [], edicio: edicio, buit: true };
 
     var campsTriats = CAMPS_PREMSA.filter(function (cp) {
       return state.premsaCampsSeleccionats[cp.key];
@@ -4648,9 +5873,10 @@
     return { capçalera: capçalera, files: files, edicio: edicio };
   }
 
-  function exportarPremsaExcel() {
+   function exportarPremsaExcel() {
     var dades = construirFilesPremsaExport();
     if (!dades) { window.alert("No hi ha dades per exportar en aquesta edició."); return; }
+    if (dades.buit) { window.alert("Cap curt coincideix amb els filtres aplicats."); return; }
     if (typeof XLSX === "undefined") {
       exportarPremsaCSVFallback(dades);
       return;
@@ -4684,6 +5910,7 @@
   function exportarPremsaPDF() {
     var dades = construirFilesPremsaExport();
     if (!dades) { window.alert("No hi ha dades per exportar en aquesta edició."); return; }
+    if (dades.buit) { window.alert("Cap curt coincideix amb els filtres aplicats."); return; }
     var html = '<!DOCTYPE html><html lang="ca"><head><meta charset="UTF-8"><title>Premsa ' + escapeHtml(edicioLabel(dades.edicio)) + '</title>' +
       '<style>' +
       'body { font-family: Arial, sans-serif; color: #111; padding: 24px; }' +
@@ -4871,6 +6098,136 @@
       w.document.write(html);
       w.document.close();
     }
+  }
+
+  // ---- EXPORTACIONS LITERARI ----
+  function exportarLiterariPDF() {
+    var edicions = state.edicions[state.cicleActiu] || [];
+    var edicio = edicions.filter(function (e) { return e.id === state.literariEdicio; })[0];
+    if (!edicio) { window.alert("No hi ha edició."); return; }
+    var acte = literariPerEdicio(edicio.id);
+    if (!acte) { window.alert("No hi ha cap acte literari en aquesta edició."); return; }
+
+    var items = (acte.items || []).slice().sort(function (a, b) {
+      var ha = (a.horaInici || "99:99");
+      var hb = (b.horaInici || "99:99");
+      if (ha !== hb) return ha.localeCompare(hb);
+      var oa = (typeof a.ordre === "number") ? a.ordre : 9999;
+      var ob = (typeof b.ordre === "number") ? b.ordre : 9999;
+      return oa - ob;
+    });
+
+    var html = '<!DOCTYPE html><html lang="ca"><head><meta charset="UTF-8"><title>' + escapeHtml(acte.nom || "Cryptshow Literari") + '</title>' +
+      '<style>' +
+      'body { font-family: Georgia, "Times New Roman", serif; color: #1a1a1a; padding: 40px; max-width: 820px; margin: 0 auto; }' +
+      'h1 { font-size: 28px; margin: 0 0 4px 0; font-weight: 700; }' +
+      '.sub { color: #8a5a2a; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; }' +
+      '.meta { font-size: 13px; color: #444; line-height: 1.7; margin: 18px 0 24px; padding: 14px 18px; background: #faf6f0; border-left: 3px solid #b07a4a; }' +
+      '.meta strong { color: #1a1a1a; }' +
+      '.item { margin-bottom: 22px; page-break-inside: avoid; }' +
+      '.item-head { display: flex; align-items: baseline; gap: 12px; border-bottom: 1px solid #e0d5c5; padding-bottom: 6px; margin-bottom: 8px; }' +
+      '.hora { font-family: Arial, sans-serif; font-weight: 700; font-size: 15px; color: #8a5a2a; min-width: 110px; }' +
+      '.tipus { font-family: Arial, sans-serif; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: #b07a4a; border: 1px solid #b07a4a; padding: 1px 8px; border-radius: 10px; }' +
+      '.titol { font-size: 17px; font-weight: 700; color: #1a1a1a; }' +
+      '.convidats { font-size: 13px; color: #555; font-style: italic; margin-bottom: 6px; }' +
+      '.obra { font-size: 13px; color: #555; margin-bottom: 6px; }' +
+      '.desc { font-size: 13.5px; color: #333; line-height: 1.65; text-align: justify; }' +
+      '.nota { font-size: 11px; color: #777; font-style: italic; margin-top: 32px; text-align: center; border-top: 1px solid #e0d5c5; padding-top: 12px; }' +
+      '</style></head><body>' +
+      '<div class="sub">Cryptshow Literari' + (acte.numEdicio ? ' · ' + escapeHtml(acte.numEdicio) : '') + '</div>' +
+      '<h1>' + escapeHtml(acte.nom || "Acte literari") + '</h1>' +
+      '<div class="meta">' +
+      (acte.dia ? '<strong>Dia:</strong> ' + escapeHtml(dataLlarga(acte.dia)) + '<br>' : '') +
+      (acte.lloc ? '<strong>Lloc:</strong> ' + escapeHtml(acte.lloc) + '<br>' : '') +
+      (acte.entrada ? '<strong>Entrada:</strong> ' + escapeHtml(acte.entrada) + '<br>' : '') +
+      (acte.presentador ? '<strong>Presentador/a:</strong> ' + escapeHtml(acte.presentador) + '<br>' : '') +
+      (acte.moderadors && acte.moderadors.length > 0 ? '<strong>Moderadors:</strong> ' + escapeHtml(acte.moderadors.join(", ")) + '<br>' : '') +
+      (acte.colaboradors && acte.colaboradors.length > 0 ? '<strong>Col·laboradors:</strong> ' + escapeHtml(acte.colaboradors.join(", ")) : '') +
+      '</div>';
+
+    items.forEach(function (it, i) {
+      var horaFi = it.durMin ? minutsAHora(horaAMinuts(it.horaInici || "00:00") + it.durMin) : "";
+      var horaTxt = (it.horaInici || "") + (horaFi ? '–' + horaFi : '') + (it.durMin ? ' (' + it.durMin + ' min)' : '');
+      html += '<div class="item">' +
+        '<div class="item-head">' +
+        '<span class="hora">' + escapeHtml(horaTxt) + '</span>' +
+        '<span class="tipus">' + escapeHtml(it.tipus || "Xerrada") + '</span>' +
+        '<span class="titol">' + escapeHtml(it.titol || "(sense títol)") + '</span>' +
+        '</div>' +
+        (it.convidats && it.convidats.length > 0 ? '<div class="convidats">Amb ' + escapeHtml(it.convidats.join(", ")) + '</div>' : '') +
+        (it.obra ? '<div class="obra">Obra: ' + escapeHtml(it.obra) + '</div>' : '') +
+        (it.descripcio ? '<div class="desc">' + escapeHtml(it.descripcio) + '</div>' : '') +
+        '</div>';
+    });
+
+    html += '<div class="nota">Cryptshow Festival · ' + escapeHtml(cicleLabel(CICLES.filter(function (c) { return c.id === state.cicleActiu; })[0])) + '</div>';
+    html += '<script>window.onload = function() { setTimeout(function() { window.print(); }, 300); };<\/script>';
+    html += '</body></html>';
+
+    var w = window.open("", "_blank");
+    if (w) {
+      w.document.open();
+      w.document.write(html);
+      w.document.close();
+    }
+  }
+
+  function exportarLiterariCSV() {
+    var edicions = state.edicions[state.cicleActiu] || [];
+    var edicio = edicions.filter(function (e) { return e.id === state.literariEdicio; })[0];
+    if (!edicio) { window.alert("No hi ha edició."); return; }
+    var acte = literariPerEdicio(edicio.id);
+    if (!acte) { window.alert("No hi ha cap acte literari en aquesta edició."); return; }
+
+    var items = (acte.items || []).slice().sort(function (a, b) {
+      var ha = (a.horaInici || "99:99");
+      var hb = (b.horaInici || "99:99");
+      if (ha !== hb) return ha.localeCompare(hb);
+      var oa = (typeof a.ordre === "number") ? a.ordre : 9999;
+      var ob = (typeof b.ordre === "number") ? b.ordre : 9999;
+      return oa - ob;
+    });
+
+    function esc(v) {
+      v = (v == null ? "" : String(v));
+      if (v.indexOf('"') !== -1 || v.indexOf(',') !== -1 || v.indexOf('\n') !== -1) return '"' + v.replace(/"/g, '""') + '"';
+      return v;
+    }
+
+    var linies = [];
+    linies.push(["Cryptshow Literari"].map(esc).join(","));
+    linies.push(["Edició", acte.numEdicio || ""].map(esc).join(","));
+    linies.push(["Dia", dataLlarga(acte.dia) || acte.dia || ""].map(esc).join(","));
+    linies.push(["Lloc", acte.lloc || ""].map(esc).join(","));
+    linies.push(["Entrada", acte.entrada || ""].map(esc).join(","));
+    linies.push(["Presentador", acte.presentador || ""].map(esc).join(","));
+    linies.push(["Moderadors", (acte.moderadors || []).join(", ")].map(esc).join(","));
+    linies.push(["Col·laboradors", (acte.colaboradors || []).join(", ")].map(esc).join(","));
+    linies.push("");
+    linies.push(["Hora inici", "Hora fi", "Durada (min)", "Tipus", "Títol", "Convidats", "Obra", "Descripció"].map(esc).join(","));
+
+    items.forEach(function (it) {
+      var horaFi = it.durMin ? minutsAHora(horaAMinuts(it.horaInici || "00:00") + it.durMin) : "";
+      linies.push([
+        it.horaInici || "",
+        horaFi,
+        it.durMin || "",
+        it.tipus || "",
+        it.titol || "",
+        (it.convidats || []).join(", "),
+        it.obra || "",
+        it.descripcio || ""
+      ].map(esc).join(","));
+    });
+
+    var csv = "\uFEFF" + linies.join("\r\n");
+    var blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "literari-" + (edicio.any || "edicio") + ".csv";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   }
 
   render();
