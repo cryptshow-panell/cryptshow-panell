@@ -3914,14 +3914,17 @@
       });
     });
 
-    var files = curts.map(function (c, idx) {
+       var files = curts.map(function (c, idx) {
       var p = programats["id:" + c.id] || programats["titol:" + normalitzarTitol(c.titol)] || null;
       var seccioCls = seccio === "oficial" ? "oficial" : "fora";
+      var sinopsiTxt = (c.sinopsi || "");
+      var sinopsiCurt = sinopsiTxt.length > 60 ? sinopsiTxt.substring(0, 60) + "…" : sinopsiTxt;
       return '<tr>' +
         '<td class="col-num">' + (idx + 1) + '</td>' +
         '<td><span class="col-seccio ' + seccioCls + '">' + (seccio === "oficial" ? "OFI" : "FORA") + '</span></td>' +
         '<td>' + escapeHtml(c.titol || "") + '</td>' +
         '<td>' + escapeHtml(c.titolOriginal || "") + '</td>' +
+        '<td title="' + escapeHtml(sinopsiTxt) + '">' + escapeHtml(sinopsiCurt) + '</td>' +
         '<td>' + escapeHtml(c.durada || "") + '</td>' +
         '<td>' + escapeHtml(c.pais || "") + '</td>' +
         '<td>' + escapeHtml(c.director || "") + '</td>' +
@@ -3951,14 +3954,13 @@
     if (llistatObert) {
       cosTaula = curts.length === 0
         ? '<p class="csx-empty">Aquesta secció encara no té cap curt al catàleg.</p>'
-        : '<div class="csx-premsa-wrap"><table class="csx-taula-premsa"><thead><tr>' +
-          '<th>Núm.</th><th>Sec.</th><th>Títol</th><th>Títol orig.</th><th>Durada</th><th>País</th>' +
+               : '<div class="csx-premsa-wrap"><table class="csx-taula-premsa"><thead><tr>' +
+          '<th>Núm.</th><th>Sec.</th><th>Títol</th><th>Títol orig.</th><th>Sinopsi</th><th>Durada</th><th>País</th>' +
           '<th>Director/a</th><th>Email</th><th>Idioma</th><th>Subtítols</th>' +
           '<th>Twitter</th><th>Facebook</th><th>Trailer</th>' +
           '<th>Juv.</th><th>TAC</th>' +
           '<th>Dia</th><th>Hora inici</th><th>Hora fi</th><th>Sala</th><th>Sessió</th>' +
           '</tr></thead><tbody>' + files + '</tbody></table></div>';
-    }
 
     var formExport = '';
     if (state.premsaExportObert) {
