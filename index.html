@@ -715,7 +715,6 @@
   }
   .csx-creds-box strong:first-child { margin-top: 0; }
 
-  /* Literari: targetes d'item i llistes de textos */
   .csx-lit-item {
     background: var(--panel);
     border: 1px solid var(--border);
@@ -887,6 +886,36 @@
     background: var(--panel-2); padding: 2px 6px;
     border-radius: 2px; font-size: 13px;
   }
+
+  /* ESTILS NOUS PER A LA IA */
+  .ia-xat {
+    display: flex; flex-direction: column; gap: 8px;
+    max-height: 50vh; overflow-y: auto;
+    border: 1px solid var(--border); background: var(--panel);
+    padding: 14px; margin-bottom: 12px;
+  }
+  .ia-user {
+    align-self: flex-end;
+    background: rgba(140,48,56,0.20);
+    border-left: 2px solid var(--accent-wine);
+    padding: 8px 12px; font-size: 13px;
+    max-width: 80%; line-height: 1.5;
+  }
+  .ia-assistant {
+    align-self: flex-start;
+    background: var(--panel-2);
+    border-left: 2px solid var(--accent-amber);
+    padding: 8px 12px; font-size: 13px;
+    max-width: 80%; line-height: 1.5;
+    white-space: pre-wrap;
+  }
+  .ia-error {
+    align-self: stretch;
+    background: rgba(201,106,60,0.10);
+    border-left: 2px solid var(--accent-warn);
+    padding: 8px 12px; font-size: 12px;
+    color: var(--accent-warn);
+  }
 </style>
 </head>
 <body>
@@ -933,7 +962,6 @@
     <div id="csx-login-msg" class="csx-login-error" style="display:none;"></div>
   </div>
 </div>
-
 <script>
 (function () {
   "use strict";
@@ -965,6 +993,7 @@
     { id: "subtitols", label: "Subtítols", rols: ["subtitols"] },
     { id: "premsa", label: "Premsa", rols: ["premsa"] },
     { id: "tasques", label: "Tasques", rols: ["tasques"] },
+    { id: "ia", label: "Assistent IA", rols: [] },
     { id: "usuaris", label: "Usuaris", rols: [], nomesAdmin: true }
   ];
 
@@ -974,7 +1003,8 @@
     { id: "curts", label: "Curts/Llargs" },
     { id: "subtitols", label: "Subtítols" },
     { id: "premsa", label: "Premsa" },
-    { id: "tasques", label: "Tasques" }
+    { id: "tasques", label: "Tasques" },
+    { id: "ia", label: "Assistent IA" }
   ];
 
   var TIPUS_SESSIO = ["Curts", "Llargs", "Altres"];
@@ -1297,7 +1327,10 @@
     usuaris: {},
     usuarisCarregats: false,
     modal: null,
-    canviContrasenyaOblit: false
+    canviContrasenyaOblit: false,
+    iaMissatges: [],
+    iaCarregant: false,
+    iaError: null
   };
   window.__state = state;
 
@@ -1323,7 +1356,6 @@
   function tarifesEdicio(edId) { return state.tarifes[edId] || []; }
   function esSessioJuvenil(s) { return !!(s && s.tipus === "Sessió Juvenil"); }
 
-  // ---- LITERARI ----
   function literariPerEdicio(edId) {
     var ed = state.literari[edId] || {};
     var keys = Object.keys(ed);
@@ -1385,6 +1417,11 @@
     if (!state.usuariCarregat) return false;
     if (seccio === "resum") return true;
     if (seccio === "usuaris") return state.esAdmin;
+    if (seccio === "ia") {
+      if (state.esAdmin) return true;
+      if (state.usuariRols && state.usuariRols["ia"]) return true;
+      return false;
+    }
     if (state.esAdmin) return true;
     var rols = state.usuariRols;
     if (rols === null) return true;
@@ -1484,6 +1521,80 @@
     console.error(msg, err);
     state.errorCarrega = (err && err.message) || String(err);
     render();
+  }
+  var IA_ENDPOINT = "https://claudeproxy-baoleqciqq-ew.a.run.app";
+
+  function ia_enviarMissatge(text) {
+    if (!text || !text.trim()) return;
+    state.iaMissatges.push({ role: "user", content: text });
+    state.iaCarregant = true;
+    state.iaError = null;
+    render();
+
+    var messages = state.iaMissatges.map(function (m) {
+      return { role: m.role, content: m.content };
+    });
+
+    fetch(IA_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messages: messages,
+        model: "claude-haiku-5-5"
+      })
+    })
+      .then(function (r) {
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      })
+      .then(function (data) {
+        var txt = "";
+        if (data && data.content) {
+          data.content.forEach(function (b) {
+            if (b.type === "text") txt += b.text;
+          });
+        }
+        if (!txt) txt = "(La IA no ha retornat cap text.)";
+        state.iaMissatges.push({ role: "assistant", content: txt });
+        state.iaCarregant = false;
+        render();
+        setTimeout(function() {
+          var xat = document.getElementById("ia-xat");
+          if (xat) xat.scrollTop = xat.scrollHeight;
+        }, 50);
+      })
+      .catch(function (err) {
+        console.error("Error IA", err);
+        state.iaError = err.message || String(err);
+        state.iaCarregant = false;
+        render();
+      });
+  }
+
+  function iaHtml() {
+    var files = state.iaMissatges.map(function (m) {
+      var cls = m.role === "user" ? "ia-user" : "ia-assistant";
+      return '<div class="' + cls + '">' + escapeHtml(m.content).replace(/\n/g, "<br>") + '</div>';
+    }).join("");
+
+    var loading = state.iaCarregant ? '<div class="ia-assistant">Pensant…</div>' : "";
+    var error = state.iaError ? '<div class="ia-error">Error: ' + escapeHtml(state.iaError) + '</div>' : "";
+
+    return '<section class="csx-panel">' +
+      '<div class="csx-panel-head"><div>' +
+      '<div class="csx-eyebrow">Assistent intern</div>' +
+      '<h2>Pregunta a la IA del Cryptshow</h2></div></div>' +
+      '<p style="font-size:12px;color:var(--text-dim);margin:-8px 0 12px;">' +
+      'La IA consulta les dades de Firebase en directe. Sigues específic ' +
+      '(cicle, edició, títol).</p>' +
+      '<div class="ia-xat" id="ia-xat">' + files + loading + error + '</div>' +
+      '<div class="csx-form-row" style="margin-top:12px;">' +
+      '<input id="ia-input" class="csx-grow" placeholder="Ex: Quantes sessions de curts té l\'edició d\'enguany?" ' +
+      (state.iaCarregant ? 'disabled' : '') + '>' +
+      '<button class="csx-btn" id="ia-enviar"' + (state.iaCarregant ? ' disabled' : '') + '>Enviar</button>' +
+      '<button class="csx-link-btn" id="ia-netejar">netejar</button>' +
+      '</div>' +
+      '</section>';
   }
 
   var listenersIniciats = false;
@@ -1602,7 +1713,6 @@
     }, function (err) { errorFirebase("Error usuaris", err); });
   }
 
-  // ---- LOGIN UI ----
   var loginRoot = document.getElementById("csx-login-root");
   var loginEmail = document.getElementById("csx-login-email");
   var loginPassword = document.getElementById("csx-login-password");
@@ -1705,6 +1815,15 @@
   function pintarUserBox() {
     var box = document.getElementById("csx-user-box");
     if (!box || !state.usuari) { box.innerHTML = ""; return; }
+
+    if (state.usuari.uid === "mode-proves") {
+      box.innerHTML =
+        '<div class="csx-user-email">Sessió: <strong>Mode proves (sense login)</strong></div>' +
+        '<div class="csx-user-rol">Administrador total</div>' +
+        '<div class="csx-user-actions"></div>';
+      return;
+    }
+
     var email = state.usuari.email || "(sense correu)";
     var rolTxt = "";
     if (state.esAdmin) rolTxt = "Administrador";
@@ -1773,25 +1892,22 @@
     });
   }
 
-  auth.onAuthStateChanged(function (user) {
-    state.authInicialitzat = true;
-    if (user) {
-      state.usuari = user;
-      state.usuariCarregat = false;
-      state.usuariRols = null;
-      state.esAdmin = false;
-      iniciarListeners();
-      mostrarPanell();
-      pintarUserBox();
-      carregarRols(user.email);
-    } else {
-      state.usuari = null;
-      state.usuariRols = null;
-      state.esAdmin = false;
-      state.usuariCarregat = false;
-      mostrarLogin();
-    }
-  });
+  function entrarModeProves() {
+    state.usuari = {
+      email: "mode-proves@local",
+      uid: "mode-proves",
+      displayName: "Mode proves"
+    };
+    state.esAdmin = true;
+    state.usuariRols = { programacio: true, literari: true, curts: true, subtitols: true, premsa: true, tasques: true, ia: true };
+    state.usuariCarregat = true;
+    iniciarListeners();
+    mostrarPanell();
+    pintarUserBox();
+    render();
+  }
+
+  entrarModeProves();
 
   function desarCicleLabels() { db.ref("cryptshow/cicleLabels").set(state.cicleLabels); }
   function desarEdicions(cicle) {
@@ -1856,7 +1972,6 @@
     desarTarifes(edId);
   }
 
-  // ---- LITERARI desar (update per registre) ----
   function desarLiterariActe(edicioId, actId, canvis) {
     db.ref("cryptshow/literari/" + edicioId + "/" + actId).update(canvis);
   }
@@ -1873,7 +1988,6 @@
     db.ref("cryptshow/literari/" + edicioId + "/" + actId).remove();
   }
 
-  // ---- escapeHtml blindat ----
   function escapeHtml(str) {
     return (str == null ? "" : String(str))
       .replace(/&/g, "&amp;")
@@ -1952,7 +2066,6 @@
     return false;
   }
 
-  // ---- LITERARI: càlcul de solapament i durada estimada ----
   function literariSeSolapen(a, b) {
     if (!a || !b) return false;
     var ai = horaAMinuts(a.horaInici || "00:00");
@@ -1962,12 +2075,8 @@
   }
 
   function literariItemsAmbAvis(items) {
-    // Retorna una còpia amb { _avis: bool } segons solapament amb el següent
     var copia = items.map(function (it) {
-      return {
-        it: it,
-        avis: false
-      };
+      return { it: it, avis: false };
     });
     for (var i = 0; i < copia.length - 1; i++) {
       var actual = copia[i].it;
@@ -1978,7 +2087,6 @@
     return copia;
   }
 
-  // ---- LITERARI: recalcul d'hores en reordenar ----
   function recalcularHoresItems(items, ordreNou) {
     var mapItems = {};
     items.forEach(function (it) { mapItems[it.id] = it; });
@@ -2021,6 +2129,7 @@
     }
     return { ok: true, resultat: resultat };
   }
+
   function recalcularHoresDia(itemsDia, ordreNou) {
     var mapItems = {};
     itemsDia.forEach(function (it) { mapItems[it.id] = it; });
@@ -2066,52 +2175,6 @@
     }
     return { ok: true, resultat: resultat };
   }
-  function recalcularHoresDia(itemsDia, ordreNou) {
-    var mapItems = {};
-    itemsDia.forEach(function (it) { mapItems[it.id] = it; });
-    var ordenats = [];
-    ordreNou.forEach(function (id) {
-      if (mapItems[id]) ordenats.push(mapItems[id]);
-    });
-    var ambHora = ordenats.filter(function (it) { return it.horaInici; });
-    if (ambHora.length === 0) return { ok: true, resultat: {} };
-
-    var hiHaFlexible = ambHora.some(function (it) { return !it.horaFixada; });
-    if (!hiHaFlexible) {
-      var resultat = {};
-      ambHora.forEach(function (it) { resultat[it.id] = it.horaInici; });
-      return { ok: true, resultat: resultat };
-    }
-    var horaBase = null;
-    ambHora.forEach(function (it) {
-      if (!it.horaFixada) {
-        var h = horaAMinuts(it.horaInici || "00:00");
-        if (horaBase === null || h < horaBase) horaBase = h;
-      }
-    });
-    var cursor = horaBase;
-    var resultat = {};
-    for (var i = 0; i < ambHora.length; i++) {
-      var it = ambHora[i];
-      if (it.horaFixada) {
-        var hFix = horaAMinuts(it.horaInici || "00:00");
-        if (cursor > hFix) {
-          var nomIt = esActivitat(it) ? (it.titol || "(sense títol)") : (it.nom || "(sense nom)");
-          return {
-            ok: false,
-            missatge: "No es pot reordenar.\n\n\"" + nomIt + "\" (" + llocLabel(it.lloc || "cercle") + ") està fixada a les " + (it.horaInici || "??") + ",\nperò amb el nou ordre no hi ha prou espai abans.\n\nSolucions:\n· Treure la fixació d'aquesta sessió/activitat\n· Canviar la seva hora manualment\n· Reordenar-ho d'una altra manera"
-          };
-        }
-        resultat[it.id] = it.horaInici;
-        cursor = hFix + durMinItem(it);
-      } else {
-        resultat[it.id] = minutsAHora(cursor);
-        cursor += durMinItem(it);
-      }
-    }
-    return { ok: true, resultat: resultat };
-  }
-
   function render() {
     if (!state.usuari) { mostrarLogin(); return; }
     if (!state.usuariCarregat) {
@@ -2198,6 +2261,7 @@
     else if (state.tab === "subtitols") main.innerHTML = subtitolsHtml();
     else if (state.tab === "premsa") main.innerHTML = premsaHtml();
     else if (state.tab === "tasques") main.innerHTML = tasquesHtml();
+    else if (state.tab === "ia") main.innerHTML = iaHtml();
     else if (state.tab === "usuaris") main.innerHTML = usuarisHtml();
     attachHandlers();
   }
@@ -2636,7 +2700,6 @@
     return '<section class="csx-panel">' + subnav + body + '</section>';
   }
 
-  // ---- LITERARI: HTML ----
   function literariHtml() {
     var edicions = state.edicions[state.cicleActiu] || [];
     var edicioId = state.literariEdicio;
@@ -2682,7 +2745,6 @@
       literariActeDetailHtml(edicio, acte) +
       '</section>';
   }
-
   function literariNouActeFormHtml(edicioId) {
     var f = state.literariNouActeForm || { dia: "", nom: "Cryptshow Literari", numEdicio: "", lloc: "", entrada: "Entrada lliure", presentador: "" };
     return '<div class="csx-literari-form">' +
@@ -2721,7 +2783,6 @@
       var fixIco = it.horaFixada ? '<span class="csx-fix-ico" title="Hora fixada">🔒</span>' : '';
       var durTxt = it.durMin ? (it.durMin + " min") : "—";
       var convidatsTxt = (it.convidats && it.convidats.length > 0) ? it.convidats.join(", ") : "";
-      var obraTxt = it.obra ? (" · " + it.obra) : "";
       var metaParts = [];
       if (convidatsTxt) metaParts.push("Convidats: " + escapeHtml(convidatsTxt));
       if (it.obra) metaParts.push("Obra: " + escapeHtml(it.obra));
@@ -2872,7 +2933,6 @@
       '</div>';
   }
 
-  // ---- Programació oficial (versió amb literari integrat) ----
   function programacioOficialHtml() {
     var edicions = state.edicions[state.cicleActiu] || [];
 
@@ -2998,7 +3058,6 @@
     if (acteLit && acteLit.dia) {
       var diaLit = acteLit.dia;
       if (!perDia[diaLit]) perDia[diaLit] = [];
-      // No afegim l'acte com a item de programació; el mostrem com a bloc a part
     }
 
     var dies = Object.keys(perDia).sort(function (a, b) {
@@ -3007,7 +3066,6 @@
       return a.localeCompare(b);
     });
 
-    // Si l'acte literari té un dia que no apareix a perDia, l'afegim
     if (acteLit && acteLit.dia && dies.indexOf(acteLit.dia) === -1) {
       dies.push(acteLit.dia);
       dies.sort(function (a, b) {
@@ -3046,7 +3104,7 @@
     return html;
   }
 
-      function renderLiterariBlocHtml(acte) {
+  function renderLiterariBlocHtml(acte) {
     var items = (acte.items || []).slice().sort(function (a, b) {
       return (a.horaInici || "99:99").localeCompare(b.horaInici || "99:99");
     });
@@ -3196,7 +3254,6 @@
       '</div>';
   }
 
-  // ---- Resta de funcions existents (sense canvis) ----
   function programacioFitxesHtml() {
     var edicions = state.edicions[state.cicleActiu] || [];
 
@@ -3629,568 +3686,35 @@
       '<input type="number" id="jc-dur-sec" min="0" max="59" placeholder="0" style="width:56px"><span>seg</span>' +
       '</div><button class="csx-btn csx-btn-juv" id="jc-afegir">Afegir curt</button></div>' + taula;
   }
-  function curtsLlargsHtml() {
-    var edicions = state.edicions[state.cicleActiu] || [];
-    var edicioId = state.premsaEdicio;
-    if (!edicioId && edicions.length > 0) { edicioId = edicions[0].id; state.premsaEdicio = edicioId; }
-    var edicio = edicions.filter(function (e) { return e.id === edicioId; })[0];
-
-    var subnav = '<div class="csx-subnav">' +
-      '<button class="' + (state.curtsVista === "oficial" ? "active" : "") + '" data-curts-vista="oficial">Secció Oficial</button>' +
-      '<button class="' + (state.curtsVista === "fora" ? "active" : "") + '" data-curts-vista="fora">Fora de competició / Llargs</button>' +
-      '</div>';
-
-    var selectEdicio = '<select id="curts-edicio">' +
-      (edicions.length === 0 ? '<option value="">(cap edició)</option>' : "") +
-      edicions.slice().sort(function (a, b) { return (b.any || 0) - (a.any || 0); }).map(function (e) {
-        var lbl = e.nom ? e.nom + " (" + e.any + ")" : "Edició " + e.any;
-        return '<option value="' + e.id + '"' + (e.id === edicioId ? " selected" : "") + '>' + escapeHtml(lbl) + '</option>';
-      }).join("") + '</select>';
-
-    if (!edicio) {
-      return '<section class="csx-panel"><div class="csx-panel-head"><div><div class="csx-eyebrow">Catàleg</div>' +
-        '<h2>Selecciona una edició</h2></div><div>' + selectEdicio + '</div></div>' + subnav +
-        '<p class="csx-empty">Encara no hi ha cap edició creada.</p></section>';
-    }
-
-    var seccio = state.curtsVista === "oficial" ? "oficial" : "fora";
-    var curts = curtsPerSeccio(edicio.id, seccio);
-    var etiqueta = seccio === "oficial" ? "Secció Oficial" : "Fora de competició / Llargs";
-    var csvInputId = seccio === "oficial" ? "csv-input-oficial" : "csv-input-fora";
-    var csvMapatge = (state.csvImport && state.csvImport.seccioDesti === seccio) ? csvMapatgeHtml() : "";
-    var llistatObert = seccio === "oficial" ? state.curtsLlistatOficial : state.curtsLlistatFora;
-
-    var juvActiu = !!novCurtFormCat.esJuvenil;
-    var tacActiu = !!novCurtFormCat.esTac;
-
-    var formAfegir = '<div class="csx-day-subhead" style="font-size:14px;color:var(--text);margin-top:20px;">Afegir ' + (seccio === "oficial" ? "curt" : "llarg") + ' manualment</div>' +
-      '<div class="csx-form-row">' +
-      '<input id="cat-titol" class="csx-grow" placeholder="Títol" value="' + escapeHtml(novCurtFormCat.titol) + '">' +
-      '<input id="cat-titolOriginal" class="csx-grow" placeholder="Títol original" value="' + escapeHtml(novCurtFormCat.titolOriginal) + '">' +
-      '<input id="cat-durada" placeholder="Durada (hh:mm:ss)" style="width:130px" value="' + escapeHtml(novCurtFormCat.durada) + '">' +
-      '<input id="cat-pais" placeholder="País" style="width:110px" value="' + escapeHtml(novCurtFormCat.pais) + '">' +
-      '<label class="csx-juv-check' + (juvActiu ? ' sel' : '') + '">' +
-      '<input type="checkbox" id="cat-esJuvenil"' + (juvActiu ? ' checked' : '') + '> És juvenil</label>' +
-      '<label class="csx-tac-check' + (tacActiu ? ' sel' : '') + '">' +
-      '<input type="checkbox" id="cat-esTac"' + (tacActiu ? ' checked' : '') + '> TAC</label>' +
-      '</div>' +
-      '<div class="csx-form-row">' +
-      '<input id="cat-director" placeholder="Director/a" value="' + escapeHtml(novCurtFormCat.director) + '">' +
-      '<input id="cat-email" placeholder="Email" value="' + escapeHtml(novCurtFormCat.email) + '">' +
-      '<input id="cat-idioma" placeholder="Idioma" style="width:100px" value="' + escapeHtml(novCurtFormCat.idioma) + '">' +
-      '<input id="cat-subtitols" placeholder="Subtítols" style="width:100px" value="' + escapeHtml(novCurtFormCat.subtitols) + '">' +
-      '</div>' +
-      '<div class="csx-form-row">' +
-      '<input id="cat-twitter" placeholder="Twitter" style="width:130px" value="' + escapeHtml(novCurtFormCat.twitter) + '">' +
-      '<input id="cat-facebook" placeholder="Facebook" style="width:130px" value="' + escapeHtml(novCurtFormCat.facebook) + '">' +
-      '<input id="cat-trailer" class="csx-grow" placeholder="Trailer (URL)" value="' + escapeHtml(novCurtFormCat.trailer) + '">' +
-      '</div>' +
-      '<div class="csx-form-row">' +
-      '<input id="cat-sinopsi" class="csx-grow" placeholder="Sinopsi" value="' + escapeHtml(novCurtFormCat.sinopsi) + '">' +
-      '<button class="csx-btn" id="cat-afegir">Afegir</button>' +
-      '</div>';
-
-    var toggleLlistat = '<button class="csx-toggle-btn" data-toggle-curts="' + seccio + '">' +
-      (llistatObert
-        ? '▾ Amagar llista (' + curts.length + ')'
-        : '▸ Mostrar llista (' + curts.length + ')') +
-      '</button>';
-
-    var cosLlistat = llistatObert ? taulaCatalegHtml(curts, seccio) : '';
-
-    var nJuv = curts.filter(function (c) { return !!c.esJuvenil; }).length;
-    var nTac = curts.filter(function (c) { return !!c.esTac; }).length;
-
-    return '<section class="csx-panel">' +
-      '<div class="csx-panel-head"><div>' +
-      '<div class="csx-eyebrow">Catàleg · ' + escapeHtml(cicleLabel(CICLES.filter(function (c) { return c.id === state.cicleActiu; })[0])) + '</div>' +
-      '<h2>' + etiqueta + '</h2></div>' +
-      '<div>' + selectEdicio + '</div></div>' +
-      subnav +
-      '<div class="csx-form-row"><input type="file" id="' + csvInputId + '" accept=".csv,text/csv">' +
-      '<span style="font-size:11px;color:var(--text-dim);">CSV amb durada en format hh:mm:ss. Columnes "És juvenil" i "TAC" opcionals.</span></div>' +
-      csvMapatge +
-      '<p style="font-size:12px;color:var(--text-dim);margin:8px 0 12px;">' +
-      '<strong style="color:var(--accent-amber);">' + curts.length + '</strong> ' + (seccio === "oficial" ? "curt(s)" : "llarg(s)") + ' al catàleg' +
-      (nJuv > 0 ? ' · <strong style="color:var(--accent-juv);">' + nJuv + '</strong> juvenil(s)' : '') +
-      (nTac > 0 ? ' · <strong style="color:var(--accent-tac);">' + nTac + '</strong> TAC' : '') +
-      '</p>' +
-      toggleLlistat +
-      cosLlistat +
-      formAfegir +
-      '</section>';
-  }
-
-  function taulaCatalegHtml(llista, seccio) {
-    if (llista.length === 0) return '<p class="csx-empty">Encara no hi ha cap fitxa en aquesta secció.</p>';
-    var files = llista.map(function (c) {
-      var juvChecked = c.esJuvenil ? " checked" : "";
-      var tacChecked = c.esTac ? " checked" : "";
-      return '<tr>' +
-        '<td title="' + escapeHtml(c.titol || "") + '">' + escapeHtml(c.titol) + '</td>' +
-        '<td title="' + escapeHtml(c.titolOriginal || "") + '">' + escapeHtml(c.titolOriginal || "") + '</td>' +
-        '<td>' + escapeHtml(c.durada || "") + '</td>' +
-        '<td>' + escapeHtml(c.pais || "") + '</td>' +
-        '<td title="' + escapeHtml(c.director || "") + '">' + escapeHtml(c.director || "") + '</td>' +
-        '<td title="' + escapeHtml(c.email || "") + '">' + escapeHtml(c.email || "") + '</td>' +
-        '<td>' + escapeHtml(c.idioma || "") + '</td>' +
-        '<td>' + escapeHtml(c.subtitols || "") + '</td>' +
-        '<td>' + escapeHtml(c.twitter || "") + '</td>' +
-        '<td>' + escapeHtml(c.facebook || "") + '</td>' +
-        '<td>' + (c.trailer ? '<a href="' + escapeHtml(c.trailer) + '" target="_blank" rel="noopener">obrir</a>' : "") + '</td>' +
-        '<td class="col-juv"><input type="checkbox" class="juv-cb" data-juv-curt="' + c.id + '"' + juvChecked + ' title="És juvenil"></td>' +
-        '<td class="col-tac"><input type="checkbox" class="tac-cb" data-tac-curt="' + c.id + '"' + tacChecked + ' title="TAC"></td>' +
-        '<td><button class="csx-link-btn" data-del-curt-catalog="' + c.id + '">eliminar</button></td>' +
-        '</tr>';
-    }).join("");
-    return '<div style="overflow-x:auto;"><table class="csx-table csx-taula-cataleg"><thead><tr>' +
-      '<th>Títol</th><th>Títol orig.</th><th>Durada</th><th>País</th><th>Director/a</th><th>Email</th>' +
-      '<th>Idioma</th><th>Subtítols</th><th>Twitter</th><th>Facebook</th><th>Trailer</th>' +
-      '<th class="col-juv">Juv.</th><th class="col-tac">TAC</th><th></th>' +
-      '</tr></thead><tbody>' + files + '</tbody></table></div>';
-  }
-
-  function csvMapatgeHtml() {
-    if (!state.csvImport) return "";
-    if (state.csvImport.headerRowIndex === null) {
-      var mostra = state.csvImport.allRows.slice(0, 5);
-      var f0 = mostra.map(function (row, i) {
-        var t = row.slice(0, 6).join(" · ") + (row.length > 6 ? " …" : "");
-        return '<div class="csx-form-row" style="margin-bottom:6px;align-items:flex-start;">' +
-          '<button class="csx-link-btn" data-tria-capsalera="' + i + '">Fila ' + (i + 1) + '</button>' +
-          '<span style="font-size:12px;color:var(--text-dim);">' + escapeHtml(t || "(buida)") + '</span></div>';
-      }).join("");
-      return '<div class="csx-setup" style="margin:16px 0;max-width:700px;">' +
-        '<p>Quina fila conté els noms dels camps?</p>' + f0 +
-        '<button class="csx-link-btn" id="csv-cancelar">Cancel·lar</button></div>';
-    }
-    var camps = [
-      { key: "titol", label: "Títol (obligatori)" },
-      { key: "titolOriginal", label: "Títol original" },
-      { key: "durada", label: "Durada" },
-      { key: "pais", label: "País" },
-      { key: "director", label: "Director/a" },
-      { key: "email", label: "Email" },
-      { key: "sinopsi", label: "Sinopsi" },
-      { key: "idioma", label: "Idioma" },
-      { key: "subtitols", label: "Subtítols" },
-      { key: "twitter", label: "Twitter" },
-      { key: "facebook", label: "Facebook" },
-      { key: "trailer", label: "Trailer" },
-      { key: "esJuvenil", label: "És juvenil" },
-      { key: "esTac", label: "TAC" }
-    ];
-    var files = camps.map(function (c) {
-      var act = state.csvImport.mapping[c.key];
-      var op = '<option value="">— cap —</option>' + state.csvImport.headers.map(function (h, i) {
-        return '<option value="' + i + '"' + (String(act) === String(i) ? " selected" : "") + '>' +
-          escapeHtml(h && h.trim() ? h : "(col " + (i + 1) + ")") + '</option>';
-      }).join("");
-      return '<div class="csx-form-row" style="margin-bottom:8px;">' +
-        '<span style="width:180px;font-size:13px;color:var(--text-dim);">' + c.label + '</span>' +
-        '<select data-map-camp="' + c.key + '">' + op + '</select>' +
-        (act !== undefined ? '<span style="font-size:11px;color:var(--accent-moss);">auto</span>' : "") +
-        '</div>';
-    }).join("");
-    var seccioTxt = state.csvImport.seccioDesti === "oficial" ? "Secció Oficial" : "Fora de competició";
-    return '<div class="csx-setup" style="margin:16px 0;max-width:700px;">' +
-      '<p>Importació a: <strong style="color:var(--accent-amber);">' + seccioTxt + '</strong></p>' +
-      '<p>' + state.csvImport.rows.length + ' files detectades.</p>' + files +
-      '<p style="font-size:12px;color:var(--text-dim);margin-top:12px;">Si és FilmFreeway amb ordre fix: ' +
-      '<button class="csx-link-btn" id="csv-preset-filmfreeway">Aplicar preset</button></p>' +
-      '<div class="csx-form-row">' +
-      '<button class="csx-btn" id="csv-confirmar">Importar ' + state.csvImport.rows.length + '</button>' +
-      '<button class="csx-link-btn" id="csv-canviar-capsalera">‹ Canviar fila</button>' +
-      '<button class="csx-link-btn" id="csv-cancelar">Cancel·lar</button>' +
-      '</div></div>';
-  }
-
-  function subtitolsHtml() {
-    var edicions = state.edicions[state.cicleActiu] || [];
-    var edicioId = state.subtitolsEdicio;
-    if (!edicioId && edicions.length > 0) { edicioId = edicions[0].id; state.subtitolsEdicio = edicioId; }
-    var edicio = edicions.filter(function (e) { return e.id === edicioId; })[0];
-
-    var selectEdicio = '<select id="subs-edicio">' +
-      (edicions.length === 0 ? '<option value="">(cap edició)</option>' : "") +
-      edicions.slice().sort(function (a, b) { return (b.any || 0) - (a.any || 0); }).map(function (e) {
-        var lbl = e.nom ? e.nom + " (" + e.any + ")" : "Edició " + e.any;
-        return '<option value="' + e.id + '"' + (e.id === edicioId ? " selected" : "") + '>' + escapeHtml(lbl) + '</option>';
-      }).join("") + '</select>';
-
-    if (!edicio) {
-      return '<section class="csx-panel"><div class="csx-panel-head"><div>' +
-        '<div class="csx-eyebrow">Subtítols</div><h2>Selecciona una edició</h2></div>' +
-        '<div>' + selectEdicio + '</div></div>' +
-        '<p class="csx-empty">Encara no hi ha cap edició creada.</p></section>';
-    }
-
-    var curtsOfi = curtsPerSeccio(edicio.id, "oficial");
-    var curtsFora = curtsPerSeccio(edicio.id, "fora");
-    var tots = curtsOfi.map(function (c) { return Object.assign({}, c, { catLabel: "Secció Oficial" }); })
-      .concat(curtsFora.map(function (c) { return Object.assign({}, c, { catLabel: "Fora de competició / Llargs" }); }));
-
-    var meta = subtitolsMetaEdicio(edicio.id);
-
-    if (tots.length === 0) {
-      return '<section class="csx-panel"><div class="csx-panel-head"><div>' +
-        '<div class="csx-eyebrow">Subtítols</div><h2>Subtítols</h2></div>' +
-        '<div>' + selectEdicio + '</div></div>' +
-        '<p class="csx-empty">Aquesta edició encara no té cap curt ni llarg al catàleg.</p></section>';
-    }
-
-    var files = tots.map(function (c, idx) {
-      var m = meta[c.id] || {};
-      return '<tr data-curt-subs="' + c.id + '">' +
-        '<td class="col-num">' + (idx + 1) + '</td>' +
-        '<td>' + escapeHtml(c.titol || "") + '</td>' +
-        '<td>' + escapeHtml(c.catLabel) + '</td>' +
-        '<td>' + escapeHtml(c.email || "") + '</td>' +
-        '<td>' + escapeHtml(c.director || "") + '</td>' +
-        '<td class="csx-check-cell"><input type="checkbox" data-subs-field="avisat" ' + (m.avisat ? "checked" : "") + '></td>' +
-        '<td class="csx-check-cell"><input type="checkbox" data-subs-field="corregit" ' + (m.corregit ? "checked" : "") + '></td>' +
-        '<td class="csx-url-cell"><input type="text" placeholder="URL subtítols" data-subs-field="urlSubs" value="' + escapeHtml(m.urlSubs || "") + '"></td>' +
-        '<td class="csx-url-cell"><input type="text" placeholder="URL sincronia" data-subs-field="urlSync" value="' + escapeHtml(m.urlSync || "") + '"></td>' +
-        '<td class="csx-check-cell"><input type="checkbox" data-subs-field="totOk" ' + (m.totOk ? "checked" : "") + '></td>' +
-        '</tr>';
-    }).join("");
-
-    var nOk = tots.filter(function (c) { return (meta[c.id] || {}).totOk; }).length;
-
-    return '<section class="csx-panel">' +
-      '<div class="csx-panel-head"><div>' +
-      '<div class="csx-eyebrow">Gestió de subtítols · ' + escapeHtml(cicleLabel(CICLES.filter(function (c) { return c.id === state.cicleActiu; })[0])) + '</div>' +
-      '<h2>Subtítols</h2></div><div>' + selectEdicio + '</div></div>' +
-      '<p style="font-size:12px;color:var(--text-dim);margin:-8px 0 12px;">' +
-      '<strong style="color:var(--accent-amber);">' + tots.length + '</strong> curt(s)/llarg(s) · ' +
-      '<strong style="color:var(--accent-ok);">' + nOk + '</strong> amb tot OK</p>' +
-      '<div class="csx-premsa-wrap">' +
-      '<table class="csx-taula-premsa"><thead><tr>' +
-      '<th>Núm.</th><th>Títol</th><th>Categoria</th><th>Email director</th><th>Nom director</th>' +
-      '<th>Avisat</th><th>Subs. corregits</th><th>URL subtítols</th><th>URL sincronia</th><th>Tot OK</th>' +
-      '</tr></thead><tbody>' + files + '</tbody></table></div></section>';
-  }
-
-  function premsaHtml() {
-    var edicions = state.edicions[state.cicleActiu] || [];
-    var edicioId = state.premsaEdicio;
-    if (!edicioId && edicions.length > 0) { edicioId = edicions[0].id; state.premsaEdicio = edicioId; }
-    var edicio = edicions.filter(function (e) { return e.id === edicioId; })[0];
-
-    var subnav = '<div class="csx-subnav">' +
-      '<button class="' + (state.premsaSubVista === "oficial" ? "active" : "") + '" data-premsa-vista="oficial">Secció Oficial</button>' +
-      '<button class="' + (state.premsaSubVista === "fora" ? "active" : "") + '" data-premsa-vista="fora">Fora de competició / Llargs</button>' +
-      '</div>';
-
-    var selectEdicio = '<select id="premsa-edicio">' +
-      (edicions.length === 0 ? '<option value="">(cap edició)</option>' : "") +
-      edicions.slice().sort(function (a, b) { return (b.any || 0) - (a.any || 0); }).map(function (e) {
-        var lbl = e.nom ? e.nom + " (" + e.any + ")" : "Edició " + e.any;
-        return '<option value="' + e.id + '"' + (e.id === edicioId ? " selected" : "") + '>' + escapeHtml(lbl) + '</option>';
-      }).join("") + '</select>';
-
-    if (!edicio) {
-      return '<section class="csx-panel"><div class="csx-panel-head"><div>' +
-        '<div class="csx-eyebrow">Premsa</div><h2>Selecciona una edició</h2></div>' +
-        '<div>' + selectEdicio + '</div></div>' + subnav +
-        '<p class="csx-empty">Encara no hi ha cap edició creada.</p></section>';
-    }
-
-    var seccio = state.premsaSubVista === "oficial" ? "oficial" : "fora";
-    var curts = curtsPerSeccio(edicio.id, seccio);
-    var llistatObert = seccio === "oficial" ? state.premsaLlistatOficial : state.premsaLlistatFora;
-
-    var sessionsArr = sessionsPerCicle(state.cicleActiu, edicio.id);
-    var programats = {};
-    sessionsArr.forEach(function (s) {
-      if (seccio === "oficial" && s.tipus !== "Curts" && !esSessioJuvenil(s)) return;
-      if (seccio === "fora" && s.tipus === "Curts") return;
-      (s.curts || []).forEach(function (c) {
-        var k1 = c.catalogId ? ("id:" + c.catalogId) : null;
-        var k2 = "titol:" + normalitzarTitol(c.titol);
-        var info = { dia: s.dia || "", horaInici: s.horaInici || "", horaFi: horaFiSessio(s), lloc: s.lloc || "", nomSessio: s.nom || "" };
-        if (k1) programats[k1] = info;
-        if (!programats[k2]) programats[k2] = info;
-      });
-    });
-
-       var files = curts.map(function (c, idx) {
-      var p = programats["id:" + c.id] || programats["titol:" + normalitzarTitol(c.titol)] || null;
-      var seccioCls = seccio === "oficial" ? "oficial" : "fora";
-      var sinopsiTxt = (c.sinopsi || "");
-      var sinopsiCurt = sinopsiTxt.length > 60 ? sinopsiTxt.substring(0, 60) + "…" : sinopsiTxt;
-      return '<tr>' +
-        '<td class="col-num">' + (idx + 1) + '</td>' +
-        '<td><span class="col-seccio ' + seccioCls + '">' + (seccio === "oficial" ? "OFI" : "FORA") + '</span></td>' +
-        '<td>' + escapeHtml(c.titol || "") + '</td>' +
-        '<td>' + escapeHtml(c.titolOriginal || "") + '</td>' +
-        '<td title="' + escapeHtml(sinopsiTxt) + '">' + escapeHtml(sinopsiCurt) + '</td>' +
-        '<td>' + escapeHtml(c.durada || "") + '</td>' +
-        '<td>' + escapeHtml(c.pais || "") + '</td>' +
-        '<td>' + escapeHtml(c.director || "") + '</td>' +
-        '<td>' + escapeHtml(c.email || "") + '</td>' +
-        '<td>' + escapeHtml(c.idioma || "") + '</td>' +
-        '<td>' + escapeHtml(c.subtitols || "") + '</td>' +
-        '<td>' + escapeHtml(c.twitter || "") + '</td>' +
-        '<td>' + escapeHtml(c.facebook || "") + '</td>' +
-        '<td>' + (c.trailer ? '<a href="' + escapeHtml(c.trailer) + '" target="_blank" rel="noopener">obrir</a>' : "") + '</td>' +
-        '<td>' + (c.esJuvenil ? '<span style="color:var(--accent-juv);">Sí</span>' : "") + '</td>' +
-        '<td>' + (c.esTac ? '<span style="color:var(--accent-tac);">Sí</span>' : "") + '</td>' +
-        '<td>' + (p ? escapeHtml(dataLlarga(p.dia)) : "") + '</td>' +
-        '<td>' + (p ? escapeHtml(p.horaInici) : "") + '</td>' +
-        '<td>' + (p ? escapeHtml(p.horaFi) : "") + '</td>' +
-        '<td>' + (p ? escapeHtml(llocLabel(p.lloc)) : "") + '</td>' +
-        '<td>' + (p ? escapeHtml(p.nomSessio) : "") + '</td>' +
-        '</tr>';
-    }).join("");
-
-    var toggleTaula = '<button class="csx-toggle-btn" data-toggle-premsa="' + seccio + '">' +
-      (llistatObert
-        ? '▾ Amagar taula (' + curts.length + ')'
-        : '▸ Mostrar taula (' + curts.length + ')') +
-      '</button>';
-
-    var cosTaula = '';
-    if (llistatObert) {
-      cosTaula = curts.length === 0
-        ? '<p class="csx-empty">Aquesta secció encara no té cap curt al catàleg.</p>'
-               : '<div class="csx-premsa-wrap"><table class="csx-taula-premsa"><thead><tr>' +
-          '<th>Núm.</th><th>Sec.</th><th>Títol</th><th>Títol orig.</th><th>Sinopsi</th><th>Durada</th><th>País</th>' +
-          '<th>Director/a</th><th>Email</th><th>Idioma</th><th>Subtítols</th>' +
-          '<th>Twitter</th><th>Facebook</th><th>Trailer</th>' +
-          '<th>Juv.</th><th>TAC</th>' +
-          '<th>Dia</th><th>Hora inici</th><th>Hora fi</th><th>Sala</th><th>Sessió</th>' +
-          '</tr></thead><tbody>' + files + '</tbody></table></div>';
-
-    var formExport = '';
-    if (state.premsaExportObert) {
-      formExport = premsaExportFormHtml();
-    }
-
-    return '<section class="csx-panel">' +
-      '<div class="csx-panel-head"><div>' +
-      '<div class="csx-eyebrow">Premsa · ' + escapeHtml(cicleLabel(CICLES.filter(function (c) { return c.id === state.cicleActiu; })[0])) + '</div>' +
-      '<h2>' + (state.premsaSubVista === "oficial" ? "Secció Oficial" : "Fora de competició / Llargs") + '</h2></div>' +
-      '<div style="display:flex;gap:8px;align-items:center;">' + selectEdicio +
-      '<button class="csx-btn" id="premsa-export">+ Exportar</button></div></div>' +
-      subnav +
-      '<p style="font-size:12px;color:var(--text-dim);margin:-8px 0 12px;">' +
-      '<strong style="color:var(--accent-amber);">' + curts.length + '</strong> curt(s) · ' +
-      Object.keys(programats).length + ' programat(s)</p>' +
-      formExport +
-      toggleTaula +
-      cosTaula +
-      '</section>';
-  }
-
-   function paisosUnics(edicio) {
-    if (!edicio) return [];
-    var set = {};
-    curtsEdicio(edicio.id).forEach(function (c) {
-      var p = (c.pais || "").trim();
-      if (p) set[p] = true;
-    });
-    return Object.keys(set).sort(function (a, b) { return a.localeCompare(b); });
-  }
-
-  function aplicarFiltresPremsa(llista) {
-    return llista.filter(function (c) {
-      var teTAC = !!c.esTac;
-      var teJuv = !!c.esJuvenil;
-      var filtreTAC = state.premsaFiltreTAC;
-      var filtreJuv = state.premsaFiltreJuvenil;
-      if (filtreTAC || filtreJuv) {
-        var passa = false;
-        if (filtreTAC && teTAC) passa = true;
-        if (filtreJuv && teJuv) passa = true;
-        if (!passa) return false;
-      }
-      if (state.premsaFiltrePais) {
-        if ((c.pais || "").trim() !== state.premsaFiltrePais) return false;
-      }
-      return true;
-    });
-  }
-
-  function premsaExportFormHtml() {
-    var edicions = state.edicions[state.cicleActiu] || [];
-    var edicio = edicions.filter(function (e) { return e.id === state.premsaEdicio; })[0];
-
-    var checks = CAMPS_PREMSA.map(function (c) {
-      var sel = state.premsaCampsSeleccionats[c.key] ? " checked" : "";
-      var cls = state.premsaCampsSeleccionats[c.key] ? "sel" : "";
-      return '<label class="' + cls + '"><input type="checkbox" data-export-camp="' + c.key + '"' + sel + '>' + c.label + '</label>';
-    }).join("");
-
-    var tacSel = state.premsaFiltreTAC ? " checked" : "";
-    var juvSel = state.premsaFiltreJuvenil ? " checked" : "";
-    var tacCls = state.premsaFiltreTAC ? " sel" : "";
-    var juvCls = state.premsaFiltreJuvenil ? " sel" : "";
-
-    var paisos = edicio ? paisosUnics(edicio) : [];
-    var opcionsPais = '<option value="">— Tots els països —</option>' +
-      paisos.map(function (p) {
-        var sel = (state.premsaFiltrePais === p) ? " selected" : "";
-        return '<option value="' + escapeHtml(p) + '"' + sel + '>' + escapeHtml(p) + '</option>';
-      }).join("");
-
-    var seccTotes = state.premsaFiltreSeccio === "totes" ? " checked" : "";
-    var seccOfi = state.premsaFiltreSeccio === "oficial" ? " checked" : "";
-    var seccFora = state.premsaFiltreSeccio === "fora" ? " checked" : "";
-
-    var recompte = 0;
-    if (edicio) {
-      var tots = [];
-      if (state.premsaFiltreSeccio === "totes" || state.premsaFiltreSeccio === "oficial") {
-        tots = tots.concat(curtsPerSeccio(edicio.id, "oficial"));
-      }
-      if (state.premsaFiltreSeccio === "totes" || state.premsaFiltreSeccio === "fora") {
-        tots = tots.concat(curtsPerSeccio(edicio.id, "fora"));
-      }
-      recompte = aplicarFiltresPremsa(tots).length;
-    }
-
-    return '<div class="csx-export-form">' +
-      '<div class="csx-eyebrow" style="margin-bottom:10px;">Exportar dades de premsa</div>' +
-      '<div class="csx-camps-grid">' + checks + '</div>' +
-      '<div class="csx-form-row" style="margin-bottom:10px;">' +
-      '<button class="csx-link-btn" id="premsa-tots">Tots</button>' +
-      '<button class="csx-link-btn" id="premsa-cap">Cap</button>' +
-      '</div>' +
-
-      '<div class="csx-filtres-bloc">' +
-      '<div class="csx-filtres-titol">Filtres</div>' +
-
-      '<div class="csx-filtre-fila">' +
-      '<span class="csx-filtre-label">Tipus:</span>' +
-      '<label class="csx-filtre-check tac' + tacCls + '">' +
-      '<input type="checkbox" id="premsa-filtre-tac"' + tacSel + '> TAC</label>' +
-      '<label class="csx-filtre-check juv' + juvCls + '">' +
-      '<input type="checkbox" id="premsa-filtre-juvenil"' + juvSel + '> Juvenil</label>' +
-      '</div>' +
-
-      '<div class="csx-filtre-fila">' +
-      '<span class="csx-filtre-label">País:</span>' +
-      '<select id="premsa-filtre-pais" style="min-width:200px;">' + opcionsPais + '</select>' +
-      '</div>' +
-
-      '<div class="csx-filtre-fila">' +
-      '<span class="csx-filtre-label">Secció:</span>' +
-      '<label class="csx-filtre-radio' + (state.premsaFiltreSeccio === "totes" ? " sel" : "") + '">' +
-      '<input type="radio" name="premsa-filtre-seccio" value="totes"' + seccTotes + '> Totes</label>' +
-      '<label class="csx-filtre-radio' + (state.premsaFiltreSeccio === "oficial" ? " sel" : "") + '">' +
-      '<input type="radio" name="premsa-filtre-seccio" value="oficial"' + seccOfi + '> Secció Oficial</label>' +
-      '<label class="csx-filtre-radio' + (state.premsaFiltreSeccio === "fora" ? " sel" : "") + '">' +
-      '<input type="radio" name="premsa-filtre-seccio" value="fora"' + seccFora + '> Fora de competició / Llargs</label>' +
-      '</div>' +
-
-      '<div class="csx-filtre-resum">' +
-      'S\'exportaran <strong>' + recompte + '</strong> curt(s) amb els filtres aplicats.' +
-      '</div>' +
-      '</div>' +
-
-      '<div class="csx-form-row" style="margin-bottom:0;">' +
-      '<button class="csx-btn" id="premsa-export-excel">Exportar Excel</button>' +
-      '<button class="csx-btn csx-btn-sec" id="premsa-export-pdf">Exportar PDF</button>' +
-      '<button class="csx-link-btn" id="premsa-export-cancel">cancel·lar</button>' +
-      '</div>' +
-      '<p style="font-size:11px;color:var(--text-dim);margin:10px 0 0;">La selecció de camps i filtres es recorda durant la sessió.</p>' +
-      '</div>';
-  }
-
-  function tasquesHtml() {
-    var subnav = '<div class="csx-subnav">' +
-      '<button class="' + (state.tasquesVista === "tasques" ? "active" : "") + '" data-tasques-vista="tasques">Tasques</button>' +
-      '<button class="' + (state.tasquesVista === "tarifes" ? "active" : "") + '" data-tasques-vista="tarifes">Tarifes</button>' +
-      '</div>';
-
-    if (state.tasquesVista === "tarifes") {
-      return '<section class="csx-panel">' + subnav + tarifesHtml() + '</section>';
-    }
-
-    var pendents = state.tasques.filter(function (t) { return !t.fet; });
-    var fetes = state.tasques.filter(function (t) { return t.fet; });
-    var buida = state.tasques.length === 0 ? '<p class="csx-empty">Encara no hi ha cap tasca.</p>' : "";
-    function fila(t, marcat) {
-      var ds = (!marcat && t.data) ? '<span class="csx-task-date">' + escapeHtml(t.data) + '</span>' : "";
-      return '<li><label><input type="checkbox" ' + (marcat ? "checked" : "") + ' data-toggle="' + t.id + '">' +
-        '<span>' + escapeHtml(t.text) + '</span></label>' + ds +
-        '<button class="csx-link-btn" data-del-tasca="' + t.id + '">eliminar</button></li>';
-    }
-    return '<section class="csx-panel">' + subnav +
-      '<div class="csx-panel-head"><div><div class="csx-eyebrow">Pendents</div><h2>Tasques</h2></div></div>' +
-      '<div class="csx-form-row">' +
-      '<input id="t-text" class="csx-grow" placeholder="Descriu la tasca" value="' + escapeHtml(tasquesForm.text) + '">' +
-      '<input id="t-data" style="width:160px" placeholder="Data límit" value="' + escapeHtml(tasquesForm.data) + '">' +
-      '<button class="csx-btn" id="t-afegir">Afegir</button></div>' + buida +
-      (pendents.length > 0 ? '<ul class="csx-task-list">' + pendents.map(function (t) { return fila(t, false); }).join("") + '</ul>' : "") +
-      (fetes.length > 0 ? '<div class="csx-eyebrow" style="margin-top:22px;">Fetes</div>' +
-        '<ul class="csx-task-list csx-task-list-done">' + fetes.map(function (t) { return fila(t, true); }).join("") + '</ul>' : "") +
-      '</section>';
-  }
-
-  function tarifesHtml() {
-    var edicions = state.edicions[state.cicleActiu] || [];
-    var edicioId = state.tarifesEdicio;
-    if (!edicioId && edicions.length > 0) {
-      var ultima = edicions.slice().sort(function (a, b) { return (b.any || 0) - (a.any || 0); })[0];
-      edicioId = ultima.id; state.tarifesEdicio = edicioId;
-    }
-    var edicio = edicions.filter(function (e) { return e.id === edicioId; })[0];
-
-    var selectEdicio = '<select id="tarifes-edicio">' +
-      (edicions.length === 0 ? '<option value="">(cap edició)</option>' : "") +
-      edicions.slice().sort(function (a, b) { return (b.any || 0) - (a.any || 0); }).map(function (e) {
-        var lbl = e.nom ? e.nom + " (" + e.any + ")" : "Edició " + e.any;
-        return '<option value="' + e.id + '"' + (e.id === edicioId ? " selected" : "") + '>' + escapeHtml(lbl) + '</option>';
-      }).join("") + '</select>';
-
-    if (!edicio) {
-      return '<div class="csx-panel-head"><div><div class="csx-eyebrow">Tarifes</div>' +
-        '<h2>Selecciona una edició</h2></div><div>' + selectEdicio + '</div></div>' +
-        '<p class="csx-empty">Encara no hi ha cap edició creada. Ves a <button class="csx-link-btn" data-nav="edicions">Edicions</button> per crear-ne una.</p>';
-    }
-
-    var tarifes = tarifesEdicio(edicio.id);
-
-    var opcionsNoms = NOMS_TARIFES.map(function (nom) {
-      return '<option value="' + escapeHtml(nom) + '">' + escapeHtml(nom) + '</option>';
-    }).join("");
-
-    var formAfegir = '<div class="csx-form-row" style="margin-bottom:20px;align-items:center;">' +
-      '<select id="tarifa-nom-select" style="min-width:220px;">' + opcionsNoms + '</select>' +
-      '<input id="tarifa-nom-altres" type="text" placeholder="Nom personalitzat" style="width:220px;display:none;">' +
-      '<input id="tarifa-preu-nova" type="text" placeholder="Preu (ex: 5€)" style="width:180px;">' +
-      '<button class="csx-btn" id="tarifa-afegir">+ Afegir tarifa</button>' +
-      '</div>';
-
-    var files = tarifes.map(function (t) {
-      return '<tr data-tarifa-id="' + t.id + '">' +
-        '<td class="nom-tarifa">' + escapeHtml(t.nom || "") + '</td>' +
-        '<td><input type="text" data-tarifa-preu="' + t.id + '" value="' + escapeHtml(t.preu || "") + '" placeholder="—"></td>' +
-        '<td><button class="csx-link-btn" data-del-tarifa="' + t.id + '">eliminar</button></td>' +
-        '</tr>';
-    }).join("");
-
-    var buida = tarifes.length === 0
-      ? '<tr><td colspan="3" style="color:var(--text-dim);font-style:italic;padding:14px 10px;">Encara no hi ha cap tarifa en aquesta edició.</td></tr>'
-      : "";
-
-    return '<div class="csx-panel-head"><div><div class="csx-eyebrow">Tarifes del festival</div>' +
-      '<h2>Preus de les sessions</h2></div><div>' + selectEdicio + '</div></div>' +
-      '<p style="font-size:12px;color:var(--text-dim);margin:-8px 0 16px;">' +
-      'Aquestes tarifes apareixen al desplegable de cada sessió o activitat al crear-la o editar-la.</p>' +
-      formAfegir +
-      '<table class="csx-taula-tarifes">' +
-      '<thead><tr><th>Nom</th><th>Preu</th><th></th></tr></thead>' +
-      '<tbody>' + files + buida + '</tbody>' +
-      '</table>';
-  }
-
-  // ===================== ATTACH HANDLERS =====================
   function attachHandlers() {
     var main = document.getElementById("csx-main");
     if (!main) return;
+
+    if (state.tab === "ia") {
+      var input = document.getElementById("ia-input");
+      var btnEnviar = document.getElementById("ia-enviar");
+      var btnNetejar = document.getElementById("ia-netejar");
+      var xat = document.getElementById("ia-xat");
+
+      if (xat) xat.scrollTop = xat.scrollHeight;
+
+      function enviar() {
+        var text = input ? input.value : "";
+        if (input) input.value = "";
+        ia_enviarMissatge(text);
+      }
+
+      if (btnEnviar) btnEnviar.addEventListener("click", enviar);
+      if (input) input.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") { e.preventDefault(); enviar(); }
+      });
+      if (btnNetejar) btnNetejar.addEventListener("click", function () {
+        state.iaMissatges = [];
+        state.iaError = null;
+        render();
+      });
+      return;
+    }
 
     main.querySelectorAll("[data-nav]").forEach(function (el) {
       el.addEventListener("click", function () {
@@ -4201,7 +3725,6 @@
       });
     });
 
-    // ---- USUARIS ----
     if (state.tab === "usuaris") {
       var btnCrear = document.getElementById("user-crear");
       if (btnCrear) btnCrear.addEventListener("click", function () {
@@ -4317,7 +3840,6 @@
       });
     }
 
-    // ===================== LITERARI =====================
     if (state.tab === "literari") {
       var selLit = document.getElementById("lit-edicio");
       if (selLit) selLit.addEventListener("change", function () {
@@ -4329,7 +3851,6 @@
         render();
       });
 
-      // Crear acte
       var formNouActe = document.getElementById("lit-nom");
       if (formNouActe) {
         var fNom = document.getElementById("lit-nom");
@@ -4374,13 +3895,11 @@
         });
       }
 
-      // Acte existent
       var acte = literariPerEdicio(state.literariEdicio);
       if (acte) {
         var actId = acte._actId;
         var edId = state.literariEdicio;
 
-        // Eliminar acte
         var btnElimActe = document.getElementById("lit-eliminar-acte");
         if (btnElimActe) btnElimActe.addEventListener("click", function () {
           if (!window.confirm("Eliminar tot l'acte literari d'aquesta edició?")) return;
@@ -4391,13 +3910,11 @@
           render();
         });
 
-        // Export
         var btnCSV = document.getElementById("lit-export-csv");
         if (btnCSV) btnCSV.addEventListener("click", function () { exportarLiterariCSV(); });
         var btnPDF = document.getElementById("lit-export-pdf");
         if (btnPDF) btnPDF.addEventListener("click", function () { exportarLiterariPDF(); });
 
-        // Editar metadades de l'acte
         var btnEditarActe = document.getElementById("lit-editar-acte");
         if (btnEditarActe) btnEditarActe.addEventListener("click", function () {
           state.literariEditarActe = true;
@@ -4424,7 +3941,6 @@
           if (eEnt) eEnt.addEventListener("change", function () { desarLiterariActe(edId, actId, { entrada: eEnt.value }); });
           if (ePres) ePres.addEventListener("change", function () { desarLiterariActe(edId, actId, { presentador: ePres.value }); });
 
-          // Llistes de textos (moderadors / colaboradors)
           main.querySelectorAll("[data-lit-add-text]").forEach(function (inp) {
             var camp = inp.getAttribute("data-lit-add-text");
             inp.addEventListener("input", function () {
@@ -4471,7 +3987,6 @@
           });
         }
 
-        // ---- Item form ----
         var items = acte.items || [];
         var f = state.literariItemForm || null;
         var esEdit = !!(f && f._editId);
@@ -4553,7 +4068,6 @@
             state.literariItemForm = null;
             state.literariCampsForm.convidats = "";
           } else {
-            // ordre = màxim + 1
             var maxOrdre = -1;
             items.forEach(function (it) {
               var o = (typeof it.ordre === "number") ? it.ordre : 0;
@@ -4585,7 +4099,6 @@
           render();
         });
 
-        // ---- Accions sobre items existents ----
         main.querySelectorAll("[data-lit-editar]").forEach(function (btn) {
           btn.addEventListener("click", function () {
             var id = btn.getAttribute("data-lit-editar");
@@ -4616,7 +4129,6 @@
           });
         });
 
-        // ---- Pujar / Baixar ----
         function aplicarOrdre(ordreNou) {
           var res = recalcularHoresItems(items, ordreNou);
           if (!res.ok) {
@@ -4624,13 +4136,11 @@
             render();
             return;
           }
-          // Aplica hores
           items.forEach(function (it) {
             if (res.resultat[it.id] !== undefined) {
               it.horaInici = res.resultat[it.id];
             }
           });
-          // Desa ordre + hores amb update per registre
           ordreNou.forEach(function (id, idx) {
             var canvis = { ordre: idx };
             var it = items.filter(function (x) { return x.id === id; })[0];
@@ -4679,7 +4189,6 @@
           });
         });
 
-        // ---- Drag & drop d'items ----
         var draggedLitId = null;
         main.querySelectorAll("[data-lit-item]").forEach(function (row) {
           row.addEventListener("dragstart", function (e) {
@@ -4707,7 +4216,6 @@
       }
     }
 
-    // ---- PROGRAMACIO (handlers existents + boto literari) ----
     if (state.tab === "programacio") {
       main.querySelectorAll("[data-prog-vista]").forEach(function (btn) {
         btn.addEventListener("click", function () {
@@ -5118,7 +4626,7 @@
           if (!nd || !nh) return true;
           if (nl === "cercle") {
             var p = { id: actOberta.id, dia: nd, horaInici: nh, tipusEntitat: "activitat", durHores: dh, durMinuts: dm };
-            if (hiHaConflicteCercle(p, totes, actOberta.id)) { window.alert("Solaparia amb una altra d'El Circol."); render(); return false; }
+            if (hiHaConflicteCercle(p, tots, actOberta.id)) { window.alert("Solaparia amb una altra d'El Circol."); render(); return false; }
           }
           return true;
         }
@@ -5324,7 +4832,6 @@
         var elJCancel = document.getElementById("j-cancelar");
         if (elJCancel) elJCancel.addEventListener("click", function () { state.juvenilForm = { nom: "", dia: "", horaInici: "", lloc: "cercle", tarifaId: "", descripcio: "", horaFixada: false }; render(); });
       } else {
-        // VISTA OFICIAL
         main.querySelectorAll("[data-obrir-sessio]").forEach(function (row) {
           row.addEventListener("click", function (e) {
             if (e.target.closest && e.target.closest("[data-del-item]")) return;
@@ -5587,7 +5094,7 @@
     }
 
     if (state.tab === "premsa") {
-            var se = document.getElementById("premsa-edicio");
+      var se = document.getElementById("premsa-edicio");
       if (se) se.addEventListener("change", function () {
         state.premsaEdicio = se.value;
         state.premsaFiltrePais = "";
@@ -5634,7 +5141,7 @@
         state.premsaExportObert = false;
         render();
       });
-           var pFTac = document.getElementById("premsa-filtre-tac");
+      var pFTac = document.getElementById("premsa-filtre-tac");
       if (pFTac) pFTac.addEventListener("change", function () {
         state.premsaFiltreTAC = pFTac.checked;
         render();
@@ -5806,8 +5313,7 @@
     reader.readAsText(file, "UTF-8");
   }
 
-  // ---- EXPORTACIONS EXISTENTS ----
-    function construirFilesPremsaExport() {
+  function construirFilesPremsaExport() {
     var edicions = state.edicions[state.cicleActiu] || [];
     var edicio = edicions.filter(function (e) { return e.id === state.premsaEdicio; })[0];
     if (!edicio) return null;
@@ -5881,7 +5387,7 @@
     return { capçalera: capçalera, files: files, edicio: edicio };
   }
 
-   function exportarPremsaExcel() {
+  function exportarPremsaExcel() {
     var dades = construirFilesPremsaExport();
     if (!dades) { window.alert("No hi ha dades per exportar en aquesta edició."); return; }
     if (dades.buit) { window.alert("Cap curt coincideix amb els filtres aplicats."); return; }
@@ -6108,7 +5614,6 @@
     }
   }
 
-  // ---- EXPORTACIONS LITERARI ----
   function exportarLiterariPDF() {
     var edicions = state.edicions[state.cicleActiu] || [];
     var edicio = edicions.filter(function (e) { return e.id === state.literariEdicio; })[0];
