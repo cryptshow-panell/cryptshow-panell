@@ -3791,6 +3791,446 @@
       '<input type="number" id="jc-dur-sec" min="0" max="59" placeholder="0" style="width:56px"><span>seg</span>' +
       '</div><button class="csx-btn csx-btn-juv" id="jc-afegir">Afegir curt</button></div>' + taula;
   }
+  // ============================================================
+  // CURTS / LLARGS
+  // ============================================================
+  function curtsLlargsHtml() {
+    var edicions = state.edicions[state.cicleActiu] || [];
+    if (!state.premsaEdicio && edicions.length > 0) {
+      var ultima = edicions.slice().sort(function (a, b) { return (b.any || 0) - (a.any || 0); })[0];
+      state.premsaEdicio = ultima.id;
+    }
+    var edicio = edicions.filter(function (e) { return e.id === state.premsaEdicio; })[0];
+
+    var selectEdicio = '<select id="curts-edicio">' +
+      (edicions.length === 0 ? '<option value="">(cap edició)</option>' : "") +
+      edicions.slice().sort(function (a, b) { return (b.any || 0) - (a.any || 0); }).map(function (e) {
+        var lbl = e.nom ? e.nom + " (" + e.any + ")" : "Edició " + e.any;
+        return '<option value="' + e.id + '"' + (e.id === state.premsaEdicio ? " selected" : "") + '>' + escapeHtml(lbl) + '</option>';
+      }).join("") + '</select>';
+
+    var capçalera = '<div class="csx-panel-head"><div>' +
+      '<div class="csx-eyebrow">Catàleg · ' + escapeHtml(cicleLabel(CICLES.filter(function (c) { return c.id === state.cicleActiu; })[0])) + '</div>' +
+      '<h2>Curts i llargs</h2></div><div>' + selectEdicio + '</div></div>';
+
+    if (!edicio) {
+      return '<section class="csx-panel">' + capçalera +
+        '<p class="csx-empty">Encara no hi ha cap edició creada en aquest cicle. Ves a <button class="csx-link-btn" data-nav="edicions">Edicions</button> per crear-ne una.</p>' +
+        '</section>';
+    }
+
+    var vista = state.curtsVista || "oficial";
+    var llistat = curtsPerSeccio(edicio.id, vista);
+
+    var tabs = '<div class="csx-subnav">' +
+      '<button class="' + (vista === "oficial" ? "active" : "") + '" data-curts-vista="oficial">Secció Oficial</button>' +
+      '<button class="' + (vista === "fora" ? "active" : "") + '" data-curts-vista="fora">Fora de competició</button>' +
+      '</div>';
+
+    var importHtml = "";
+    if (state.csvImport) {
+      importHtml = csvImportHtml();
+    } else {
+      importHtml = '<div class="csx-form-row">' +
+        '<label class="csx-btn csx-btn-sec" style="cursor:pointer;">Importar CSV (' + (vista === "oficial" ? "oficial" : "fora") + ')' +
+        '<input type="file" id="csv-input-' + vista + '" accept=".csv,text/csv" style="display:none;">' +
+        '</label>' +
+        '</div>';
+    }
+
+    var filesCurts = llistat.map(function (c) {
+      return '<tr>' +
+        '<td>' + escapeHtml(c.titol || "") + '</td>' +
+        '<td>' + escapeHtml(c.titolOriginal || "") + '</td>' +
+        '<td>' + escapeHtml(c.durada || "") + '</td>' +
+        '<td>' + escapeHtml(c.pais || "") + '</td>' +
+        '<td>' + escapeHtml(c.director || "") + '</td>' +
+        '<td class="col-juv"><input type="checkbox" class="juv-cb" data-juv-curt="' + c.id + '"' + (c.esJuvenil ? " checked" : "") + '></td>' +
+        '<td class="col-tac"><input type="checkbox" class="tac-cb" data-tac-curt="' + c.id + '"' + (c.esTac ? " checked" : "") + '></td>' +
+        '<td><button class="csx-link-btn" data-del-curt-catalog="' + c.id + '">eliminar</button></td>' +
+        '</tr>';
+    }).join("");
+
+    var taula = llistat.length === 0
+      ? '<p class="csx-empty">Encara no hi ha cap curt en aquesta secció.</p>'
+      : '<div style="overflow-x:auto;"><table class="csx-table csx-taula-cataleg"><thead><tr>' +
+        '<th>Títol</th><th>Títol original</th><th>Durada</th><th>País</th><th>Director/a</th>' +
+        '<th class="col-juv">Juv.</th><th class="col-tac">TAC</th><th></th>' +
+        '</tr></thead><tbody>' + filesCurts + '</tbody></table></div>';
+
+    var formNou = '<div class="csx-form-row" style="margin-top:16px;">' +
+      '<input id="cat-titol" class="csx-grow" placeholder="Títol*" value="' + escapeHtml(novCurtFormCat.titol) + '">' +
+      '<input id="cat-titolOriginal" class="csx-grow" placeholder="Títol original" value="' + escapeHtml(novCurtFormCat.titolOriginal) + '">' +
+      '<input id="cat-durada" placeholder="Durada" value="' + escapeHtml(novCurtFormCat.durada) + '" style="width:90px;">' +
+      '<input id="cat-pais" placeholder="País" value="' + escapeHtml(novCurtFormCat.pais) + '" style="width:100px;">' +
+      '<input id="cat-director" class="csx-grow" placeholder="Director/a" value="' + escapeHtml(novCurtFormCat.director) + '">' +
+      '</div>' +
+      '<div class="csx-form-row">' +
+      '<input id="cat-email" class="csx-grow" placeholder="Email" value="' + escapeHtml(novCurtFormCat.email) + '">' +
+      '<input id="cat-idioma" placeholder="Idioma" value="' + escapeHtml(novCurtFormCat.idioma) + '" style="width:120px;">' +
+      '<input id="cat-subtitols" placeholder="Subtítols" value="' + escapeHtml(novCurtFormCat.subtitols) + '" style="width:120px;">' +
+      '<input id="cat-trailer" class="csx-grow" placeholder="Trailer URL" value="' + escapeHtml(novCurtFormCat.trailer) + '">' +
+      '</div>' +
+      '<div class="csx-form-row">' +
+      '<input id="cat-sinopsi" class="csx-grow" placeholder="Sinopsi" value="' + escapeHtml(novCurtFormCat.sinopsi) + '">' +
+      '<input id="cat-twitter" placeholder="Twitter" value="' + escapeHtml(novCurtFormCat.twitter) + '" style="width:140px;">' +
+      '<input id="cat-facebook" placeholder="Facebook" value="' + escapeHtml(novCurtFormCat.facebook) + '" style="width:140px;">' +
+      '<label class="csx-juv-check' + (novCurtFormCat.esJuvenil ? " sel" : "") + '">' +
+      '<input type="checkbox" id="cat-esJuvenil"' + (novCurtFormCat.esJuvenil ? " checked" : "") + '> És juvenil</label>' +
+      '<label class="csx-tac-check' + (novCurtFormCat.esTac ? " sel" : "") + '">' +
+      '<input type="checkbox" id="cat-esTac"' + (novCurtFormCat.esTac ? " checked" : "") + '> TAC</label>' +
+      '<button class="csx-btn" id="cat-afegir">Afegir curt</button>' +
+      '</div>';
+
+    return '<section class="csx-panel">' + capçalera + tabs + importHtml +
+      '<div class="csx-day-subhead" style="margin-top:16px;font-size:13px;color:var(--text);">Catàleg actual</div>' +
+      taula +
+      '<div class="csx-day-subhead" style="margin-top:20px;font-size:13px;color:var(--text);">Afegir nou curt manualment</div>' +
+      formNou +
+      '</section>';
+  }
+
+  function csvImportHtml() {
+    var imp = state.csvImport;
+    var headers = imp.headers || [];
+    var mapping = imp.mapping || {};
+    var camps = Object.keys(SINONIMS_CAMP);
+
+    var filesHeaders = headers.map(function (h, i) {
+      return '<th style="white-space:nowrap;">' + escapeHtml(h || ("Columna " + (i + 1))) + '</th>';
+    }).join("");
+
+    var filesFiles = (imp.rows || []).slice(0, 5).map(function (row) {
+      return '<tr>' + headers.map(function (_, i) {
+        return '<td>' + escapeHtml(row[i] || "") + '</td>';
+      }).join("") + '</tr>';
+    }).join("");
+
+    var mapRows = camps.map(function (camp) {
+      var opcions = '<option value="">(no importar)</option>' + headers.map(function (h, i) {
+        return '<option value="' + i + '"' + (String(mapping[camp]) === String(i) ? " selected" : "") + '>' + escapeHtml(h || ("Columna " + (i + 1))) + '</option>';
+      }).join("");
+      return '<div class="csx-filtre-fila">' +
+        '<div class="csx-filtre-label">' + escapeHtml(camp) + '</div>' +
+        '<select data-map-camp="' + camp + '" class="csx-grow">' + opcions + '</select>' +
+        '</div>';
+    }).join("");
+
+    return '<div class="csx-export-form">' +
+      '<div class="csx-eyebrow" style="margin-bottom:10px;">Importar CSV · ' + escapeHtml(imp.seccioDesti || "") + '</div>' +
+      '<p style="font-size:12px;color:var(--text-dim);">Revisa el mapeig de columnes abans de confirmar. Les 5 primeres files es mostren com a previsualització.</p>' +
+      '<div style="overflow-x:auto;margin-bottom:12px;"><table class="csx-table"><thead><tr>' + filesHeaders + '</tr></thead><tbody>' + filesFiles + '</tbody></table></div>' +
+      '<div class="csx-day-subhead" style="font-size:12px;">Mapeig de columnes</div>' +
+      mapRows +
+      '<div class="csx-form-row" style="margin-top:14px;">' +
+      '<button class="csx-btn" id="csv-confirmar">Importar ' + (imp.rows ? imp.rows.length : 0) + ' files</button>' +
+      '<button class="csx-link-btn" id="csv-cancelar">cancel·lar</button>' +
+      '<button class="csx-link-btn" id="csv-preset-filmfreeway">aplicar preset FilmFreeway</button>' +
+      '</div>' +
+      '</div>';
+  }
+
+  // ============================================================
+  // SUBTÍTOLS
+  // ============================================================
+  function subtitolsHtml() {
+    var edicions = state.edicions[state.cicleActiu] || [];
+    if (!state.subtitolsEdicio && edicions.length > 0) {
+      var ultima = edicions.slice().sort(function (a, b) { return (b.any || 0) - (a.any || 0); })[0];
+      state.subtitolsEdicio = ultima.id;
+    }
+    var edicio = edicions.filter(function (e) { return e.id === state.subtitolsEdicio; })[0];
+
+    var selectEdicio = '<select id="subs-edicio">' +
+      (edicions.length === 0 ? '<option value="">(cap edició)</option>' : "") +
+      edicions.slice().sort(function (a, b) { return (b.any || 0) - (a.any || 0); }).map(function (e) {
+        var lbl = e.nom ? e.nom + " (" + e.any + ")" : "Edició " + e.any;
+        return '<option value="' + e.id + '"' + (e.id === state.subtitolsEdicio ? " selected" : "") + '>' + escapeHtml(lbl) + '</option>';
+      }).join("") + '</select>';
+
+    var capçalera = '<div class="csx-panel-head"><div>' +
+      '<div class="csx-eyebrow">Subtítols · ' + escapeHtml(cicleLabel(CICLES.filter(function (c) { return c.id === state.cicleActiu; })[0])) + '</div>' +
+      '<h2>Gestió de subtítols</h2></div><div>' + selectEdicio + '</div></div>';
+
+    if (!edicio) {
+      return '<section class="csx-panel">' + capçalera +
+        '<p class="csx-empty">Encara no hi ha cap edició creada en aquest cicle.</p></section>';
+    }
+
+    var curts = curtsEdicio(edicio.id);
+    var metaEd = subtitolsMetaEdicio(edicio.id);
+
+    var files = curts.map(function (c) {
+      var m = metaEd[c.id] || {};
+      var avisat = !!m.avisat;
+      var corregit = !!m.corregit;
+      var totOk = !!m.totOk;
+      return '<tr data-curt-subs="' + c.id + '">' +
+        '<td>' + escapeHtml(c.titol || "") + '</td>' +
+        '<td>' + escapeHtml(c.pais || "") + '</td>' +
+        '<td>' + escapeHtml(c.idioma || "") + '</td>' +
+        '<td class="csx-check-cell"><input type="checkbox" data-subs-field="avisat"' + (avisat ? " checked" : "") + '></td>' +
+        '<td class="csx-check-cell"><input type="checkbox" data-subs-field="corregit"' + (corregit ? " checked" : "") + '></td>' +
+        '<td class="csx-url-cell"><input type="text" data-subs-field="urlSubs" value="' + escapeHtml(m.urlSubs || "") + '" placeholder="URL subtítols"></td>' +
+        '<td class="csx-url-cell"><input type="text" data-subs-field="urlSync" value="' + escapeHtml(m.urlSync || "") + '" placeholder="URL sync"></td>' +
+        '<td class="csx-check-cell"><input type="checkbox" data-subs-field="totOk"' + (totOk ? " checked" : "") + '></td>' +
+        '</tr>';
+    }).join("");
+
+    var taula = curts.length === 0
+      ? '<p class="csx-empty">Encara no hi ha curts en el catàleg d\'aquesta edició.</p>'
+      : '<div class="csx-premsa-wrap"><table class="csx-taula-premsa"><thead><tr>' +
+        '<th>Títol</th><th>País</th><th>Idioma</th>' +
+        '<th>Avisat</th><th>Corregit</th><th>URL subtítols</th><th>URL sync</th><th>Tot OK</th>' +
+        '</tr></thead><tbody>' + files + '</tbody></table></div>';
+
+    return '<section class="csx-panel">' + capçalera + taula + '</section>';
+  }
+
+  // ============================================================
+  // PREMSA
+  // ============================================================
+  function premsaHtml() {
+    var edicions = state.edicions[state.cicleActiu] || [];
+    if (!state.premsaEdicio && edicions.length > 0) {
+      var ultima = edicions.slice().sort(function (a, b) { return (b.any || 0) - (a.any || 0); })[0];
+      state.premsaEdicio = ultima.id;
+    }
+    var edicio = edicions.filter(function (e) { return e.id === state.premsaEdicio; })[0];
+
+    var selectEdicio = '<select id="premsa-edicio">' +
+      (edicions.length === 0 ? '<option value="">(cap edició)</option>' : "") +
+      edicions.slice().sort(function (a, b) { return (b.any || 0) - (a.any || 0); }).map(function (e) {
+        var lbl = e.nom ? e.nom + " (" + e.any + ")" : "Edició " + e.any;
+        return '<option value="' + e.id + '"' + (e.id === state.premsaEdicio ? " selected" : "") + '>' + escapeHtml(lbl) + '</option>';
+      }).join("") + '</select>';
+
+    var capçalera = '<div class="csx-panel-head"><div>' +
+      '<div class="csx-eyebrow">Premsa · ' + escapeHtml(cicleLabel(CICLES.filter(function (c) { return c.id === state.cicleActiu; })[0])) + '</div>' +
+      '<h2>Taula de premsa</h2></div><div style="display:flex;gap:8px;align-items:center;">' + selectEdicio +
+      '<button class="csx-btn csx-btn-sec" id="premsa-export">Exportar…</button>' +
+      '</div></div>';
+
+    if (!edicio) {
+      return '<section class="csx-panel">' + capçalera +
+        '<p class="csx-empty">Encara no hi ha cap edició creada en aquest cicle.</p></section>';
+    }
+
+    var sessionsArr = sessionsPerCicle(state.cicleActiu, edicio.id);
+    var programats = {};
+    sessionsArr.forEach(function (s) {
+      (s.curts || []).forEach(function (c) {
+        var k1 = c.catalogId ? ("id:" + c.catalogId) : null;
+        var k2 = "titol:" + normalitzarTitol(c.titol);
+        var info = { dia: s.dia || "", horaInici: s.horaInici || "", horaFi: horaFiSessio(s), lloc: s.lloc || "", nom: s.nom || "" };
+        if (k1) programats[k1] = info;
+        if (!programats[k2]) programats[k2] = info;
+      });
+    });
+
+    var curtsOfi = curtsPerSeccio(edicio.id, "oficial");
+    var curtsFora = curtsPerSeccio(edicio.id, "fora");
+
+    var tots = [];
+    if (state.premsaFiltreSeccio === "totes" || state.premsaFiltreSeccio === "oficial") {
+      tots = tots.concat(curtsOfi.map(function (c) { return { c: c, seccio: "OFICIAL" }; }));
+    }
+    if (state.premsaFiltreSeccio === "totes" || state.premsaFiltreSeccio === "fora") {
+      tots = tots.concat(curtsFora.map(function (c) { return { c: c, seccio: "FORA" }; }));
+    }
+
+    var paisos = {};
+    curtsOfi.concat(curtsFora).forEach(function (c) { if (c.pais) paisos[c.pais] = true; });
+    var paisosOrdenats = Object.keys(paisos).sort();
+
+    tots = tots.filter(function (item) {
+      var c = item.c;
+      if (state.premsaFiltreTAC && !c.esTac) return false;
+      if (state.premsaFiltreJuvenil && !c.esJuvenil) return false;
+      if (state.premsaFiltrePais && (c.pais || "").trim() !== state.premsaFiltrePais) return false;
+      return true;
+    });
+
+    var filtresHtml = '<div class="csx-filtres-bloc">' +
+      '<div class="csx-filtres-titol">Filtres</div>' +
+      '<div class="csx-filtre-fila">' +
+      '<div class="csx-filtre-label">Etiquetes</div>' +
+      '<label class="csx-filtre-check tac' + (state.premsaFiltreTAC ? " sel" : "") + '">' +
+      '<input type="checkbox" id="premsa-filtre-tac"' + (state.premsaFiltreTAC ? " checked" : "") + '> TAC</label>' +
+      '<label class="csx-filtre-check juv' + (state.premsaFiltreJuvenil ? " sel" : "") + '">' +
+      '<input type="checkbox" id="premsa-filtre-juvenil"' + (state.premsaFiltreJuvenil ? " checked" : "") + '> Juvenil</label>' +
+      '</div>' +
+      '<div class="csx-filtre-fila">' +
+      '<div class="csx-filtre-label">País</div>' +
+      '<select id="premsa-filtre-pais"><option value="">(tots)</option>' +
+      paisosOrdenats.map(function (p) {
+        return '<option value="' + escapeHtml(p) + '"' + (state.premsaFiltrePais === p ? " selected" : "") + '>' + escapeHtml(p) + '</option>';
+      }).join("") + '</select>' +
+      '</div>' +
+      '<div class="csx-filtre-fila">' +
+      '<div class="csx-filtre-label">Secció</div>' +
+      '<label class="csx-filtre-radio' + (state.premsaFiltreSeccio === "totes" ? " sel" : "") + '">' +
+      '<input type="radio" name="premsa-filtre-seccio" value="totes"' + (state.premsaFiltreSeccio === "totes" ? " checked" : "") + '> Totes</label>' +
+      '<label class="csx-filtre-radio' + (state.premsaFiltreSeccio === "oficial" ? " sel" : "") + '">' +
+      '<input type="radio" name="premsa-filtre-seccio" value="oficial"' + (state.premsaFiltreSeccio === "oficial" ? " checked" : "") + '> Oficial</label>' +
+      '<label class="csx-filtre-radio' + (state.premsaFiltreSeccio === "fora" ? " sel" : "") + '">' +
+      '<input type="radio" name="premsa-filtre-seccio" value="fora"' + (state.premsaFiltreSeccio === "fora" ? " checked" : "") + '> Fora</label>' +
+      '</div>' +
+      '<div class="csx-filtre-resum">Resultats: <strong>' + tots.length + '</strong> curt(s)/llarg(s)</div>' +
+      '</div>';
+
+    var exportHtml = "";
+    if (state.premsaExportObert) {
+      var campsChecks = CAMPS_PREMSA.map(function (cp) {
+        return '<label class="' + (state.premsaCampsSeleccionats[cp.key] ? "sel" : "") + '">' +
+          '<input type="checkbox" data-export-camp="' + cp.key + '"' + (state.premsaCampsSeleccionats[cp.key] ? " checked" : "") + '> ' + escapeHtml(cp.label) +
+          '</label>';
+      }).join("");
+      exportHtml = '<div class="csx-export-form">' +
+        '<div class="csx-eyebrow" style="margin-bottom:10px;">Columnes a exportar</div>' +
+        '<div class="csx-camps-grid">' + campsChecks + '</div>' +
+        '<div class="csx-form-row" style="margin-bottom:0;">' +
+        '<button class="csx-btn csx-btn-sec" id="premsa-tots">Tots</button>' +
+        '<button class="csx-btn csx-btn-sec" id="premsa-cap">Cap</button>' +
+        '<button class="csx-btn" id="premsa-export-excel">Exportar Excel</button>' +
+        '<button class="csx-btn csx-btn-sec" id="premsa-export-pdf">Exportar PDF</button>' +
+        '<button class="csx-link-btn" id="premsa-export-cancel">cancel·lar</button>' +
+        '</div>' +
+        '</div>';
+    }
+
+    var files = tots.map(function (item) {
+      var c = item.c;
+      var p = programats["id:" + c.id] || programats["titol:" + normalitzarTitol(c.titol)] || null;
+      return '<tr>' +
+        '<td>' + escapeHtml(item.seccio) + '</td>' +
+        '<td>' + escapeHtml(c.titol || "") + '</td>' +
+        '<td>' + escapeHtml(c.titolOriginal || "") + '</td>' +
+        '<td>' + escapeHtml(c.durada || "") + '</td>' +
+        '<td>' + escapeHtml(c.pais || "") + '</td>' +
+        '<td>' + escapeHtml(c.director || "") + '</td>' +
+        '<td>' + (c.esJuvenil ? "Sí" : "") + '</td>' +
+        '<td>' + (c.esTac ? "Sí" : "") + '</td>' +
+        '<td>' + (p ? escapeHtml(dataLlarga(p.dia) || p.dia) : "") + '</td>' +
+        '<td>' + (p ? escapeHtml(p.horaInici) : "") + '</td>' +
+        '<td>' + (p ? escapeHtml(p.horaFi) : "") + '</td>' +
+        '<td>' + (p ? escapeHtml(llocLabel(p.lloc)) : "") + '</td>' +
+        '</tr>';
+    }).join("");
+
+    var taula = tots.length === 0
+      ? '<p class="csx-empty">Cap curt coincideix amb els filtres aplicats.</p>'
+      : '<div class="csx-premsa-wrap"><table class="csx-taula-premsa"><thead><tr>' +
+        '<th>Secció</th><th>Títol</th><th>Títol original</th><th>Durada</th><th>País</th>' +
+        '<th>Director/a</th><th>Juv.</th><th>TAC</th>' +
+        '<th>Dia</th><th>Hora inici</th><th>Hora fi</th><th>Sala</th>' +
+        '</tr></thead><tbody>' + files + '</tbody></table></div>';
+
+    return '<section class="csx-panel">' + capçalera + filtresHtml + exportHtml + taula + '</section>';
+  }
+
+  // ============================================================
+  // TASQUES I TARIFES
+  // ============================================================
+  function tasquesHtml() {
+    var tabs = '<div class="csx-subnav">' +
+      '<button class="' + (state.tasquesVista === "tasques" ? "active" : "") + '" data-tasques-vista="tasques">Tasques</button>' +
+      '<button class="' + (state.tasquesVista === "tarifes" ? "active" : "") + '" data-tasques-vista="tarifes">Tarifes</button>' +
+      '</div>';
+
+    if (state.tasquesVista === "tarifes") {
+      return '<section class="csx-panel">' + tabs + tarifesHtml() + '</section>';
+    }
+
+    var pendents = state.tasques.filter(function (t) { return !t.fet; });
+    var fetes = state.tasques.filter(function (t) { return t.fet; });
+
+    var filesPendents = pendents.map(function (t) {
+      return '<li>' +
+        '<label><input type="checkbox" data-toggle="' + t.id + '"> <span>' + escapeHtml(t.text) + '</span></label>' +
+        (t.data ? '<span class="csx-task-date">' + escapeHtml(dataLlarga(t.data) || t.data) + '</span>' : '') +
+        '<button class="csx-link-btn" data-del-tasca="' + t.id + '">eliminar</button>' +
+        '</li>';
+    }).join("");
+
+    var filesFetes = fetes.map(function (t) {
+      return '<li>' +
+        '<label><input type="checkbox" data-toggle="' + t.id + '" checked> <span>' + escapeHtml(t.text) + '</span></label>' +
+        (t.data ? '<span class="csx-task-date">' + escapeHtml(dataLlarga(t.data) || t.data) + '</span>' : '') +
+        '<button class="csx-link-btn" data-del-tasca="' + t.id + '">eliminar</button>' +
+        '</li>';
+    }).join("");
+
+    return '<section class="csx-panel">' + tabs +
+      '<div class="csx-panel-head"><div>' +
+      '<div class="csx-eyebrow">Organització interna</div><h2>Tasques</h2></div></div>' +
+      '<div class="csx-form-row">' +
+      '<input id="t-text" class="csx-grow" placeholder="Nova tasca…" value="' + escapeHtml(tasquesForm.text) + '">' +
+      '<input type="date" id="t-data" value="' + escapeHtml(tasquesForm.data) + '">' +
+      '<button class="csx-btn" id="t-afegir">Afegir</button>' +
+      '</div>' +
+      '<div class="csx-day-subhead" style="font-size:13px;color:var(--text);">Pendents (' + pendents.length + ')</div>' +
+      (pendents.length === 0
+        ? '<p class="csx-empty">Cap tasca pendent.</p>'
+        : '<ul class="csx-task-list">' + filesPendents + '</ul>') +
+      '<div class="csx-day-subhead" style="font-size:13px;color:var(--text);margin-top:20px;">Fetes (' + fetes.length + ')</div>' +
+      (fetes.length === 0
+        ? '<p class="csx-empty">Encara no hi ha cap tasca feta.</p>'
+        : '<ul class="csx-task-list csx-task-list-done">' + filesFetes + '</ul>') +
+      '</section>';
+  }
+
+  function tarifesHtml() {
+    var edicions = state.edicions[state.cicleActiu] || [];
+    if (!state.tarifesEdicio && edicions.length > 0) {
+      var ultima = edicions.slice().sort(function (a, b) { return (b.any || 0) - (a.any || 0); })[0];
+      state.tarifesEdicio = ultima.id;
+    }
+    var edicio = edicions.filter(function (e) { return e.id === state.tarifesEdicio; })[0];
+
+    var selectEdicio = '<select id="tarifes-edicio">' +
+      (edicions.length === 0 ? '<option value="">(cap edició)</option>' : "") +
+      edicions.slice().sort(function (a, b) { return (b.any || 0) - (a.any || 0); }).map(function (e) {
+        var lbl = e.nom ? e.nom + " (" + e.any + ")" : "Edició " + e.any;
+        return '<option value="' + e.id + '"' + (e.id === state.tarifesEdicio ? " selected" : "") + '>' + escapeHtml(lbl) + '</option>';
+      }).join("") + '</select>';
+
+    var capçalera = '<div class="csx-panel-head"><div>' +
+      '<div class="csx-eyebrow">Tarifes · ' + escapeHtml(cicleLabel(CICLES.filter(function (c) { return c.id === state.cicleActiu; })[0])) + '</div>' +
+      '<h2>Preus de les sessions</h2></div><div>' + selectEdicio + '</div></div>';
+
+    if (!edicio) {
+      return capçalera + '<p class="csx-empty">Encara no hi ha cap edició creada en aquest cicle.</p>';
+    }
+
+    var tarifes = tarifesEdicio(edicio.id);
+    var files = tarifes.map(function (t) {
+      return '<tr>' +
+        '<td class="nom-tarifa">' + escapeHtml(t.nom) + '</td>' +
+        '<td><input type="text" data-tarifa-preu="' + t.id + '" value="' + escapeHtml(t.preu || "") + '"></td>' +
+        '<td><button class="csx-link-btn" data-del-tarifa="' + t.id + '">eliminar</button></td>' +
+        '</tr>';
+    }).join("");
+
+    var taula = tarifes.length === 0
+      ? '<p class="csx-empty">Encara no hi ha tarifes en aquesta edició.</p>'
+      : '<table class="csx-taula-tarifes"><thead><tr><th>Nom</th><th>Preu</th><th></th></tr></thead><tbody>' + files + '</tbody></table>';
+
+    var opcionsNoms = NOMS_TARIFES.map(function (n) {
+      return '<option value="' + escapeHtml(n) + '">' + escapeHtml(n) + '</option>';
+    }).join("");
+
+    var formNova = '<div class="csx-form-row" style="margin-top:16px;">' +
+      '<select id="tarifa-nom-select">' + opcionsNoms + '</select>' +
+      '<input id="tarifa-nom-altres" class="csx-grow" placeholder="Nom personalitzat" style="display:none;">' +
+      '<input id="tarifa-preu-nova" placeholder="Preu" style="width:120px;">' +
+      '<button class="csx-btn" id="tarifa-afegir">Afegir tarifa</button>' +
+      '</div>';
+
+    return capçalera + taula +
+      '<div class="csx-day-subhead" style="margin-top:20px;font-size:13px;color:var(--text);">Afegir tarifa</div>' +
+      formNova;
+  }
   function attachHandlers() {
     var main = document.getElementById("csx-main");
     if (!main) return;
